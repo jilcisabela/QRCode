@@ -213,6 +213,7 @@ let zip=new JSZip();
 let btn=document.getElementById("downloadZip");
 btn.style.display="inline-block";
 btn.innerText="Preparing ZIP...";
+btn.disabled = true;
 
 for(let i=0;i<names.length;i++){
 
@@ -265,6 +266,7 @@ height:220
 window.generatedZip=zip;
 
 btn.innerText="Download All QR (ZIP)";
+btn.disabled = false;
 
 document.getElementById("status").innerText="QR codes ready. Click Download ZIP.";
 }
