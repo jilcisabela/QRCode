@@ -194,7 +194,7 @@ height:220
 document.getElementById("downloadBtn").style.display="inline-block"
 
 }
-function generateBulk(){
+async function generateBulk(){
 
 let names=document.getElementById("bulkNames")
 .value
@@ -202,35 +202,43 @@ let names=document.getElementById("bulkNames")
 .map(n => n.trim())
 .filter(n => n !== "")
 
-let result=document.getElementById("bulkResult")
+if(names.length > 1000){
+alert("Maximum 1000 names only")
+return
+}
 
-result.innerHTML=""
+let zip = new JSZip()
 
-names.forEach(name=>{
+for(let name of names){
 
-let div=document.createElement("div")
-div.className="bulkItem"
+let tempDiv = document.createElement("div")
 
-let qrDiv=document.createElement("div")
-
-div.appendChild(qrDiv)
-
-let label=document.createElement("p")
-label.innerText=name
-div.appendChild(label)
-
-new QRCode(qrDiv,{
+let qr = new QRCode(tempDiv,{
 text:name,
 width:220,
 height:220
 })
 
-result.appendChild(div)
+await new Promise(resolve=>setTimeout(resolve,50))
 
-})
+let canvas = tempDiv.querySelector("canvas")
 
-document.getElementById("downloadSeparate").style.display="inline-block"
-document.getElementById("downloadZip").style.display="inline-block"
+let data = canvas.toDataURL("image/png").split(",")[1]
+
+let cleanName = name
+.replace(/[,]/g,"")
+.replace(/[\\/:*?"<>|]/g,"")
+
+zip.file(cleanName + ".png", data, {base64:true})
+
+}
+
+let content = await zip.generateAsync({type:"blob"})
+
+let link = document.createElement("a")
+link.href = URL.createObjectURL(content)
+link.download = "All_QR_Codes.zip"
+link.click()
 
 }
 
