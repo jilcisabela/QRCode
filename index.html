@@ -205,21 +205,34 @@ alert("Maximum 1000 names only")
 return
 }
 
+let result=document.getElementById("bulkResult")
+result.innerHTML=""
+
 let zip = new JSZip()
 
 for(let name of names){
 
-let tempDiv = document.createElement("div")
+let div=document.createElement("div")
+div.className="bulkItem"
 
-let qr = new QRCode(tempDiv,{
+let qrDiv=document.createElement("div")
+div.appendChild(qrDiv)
+
+let label=document.createElement("p")
+label.innerText=name
+div.appendChild(label)
+
+result.appendChild(div)
+
+let qr=new QRCode(qrDiv,{
 text:name,
 width:220,
 height:220
 })
 
-await new Promise(resolve=>setTimeout(resolve,50))
+await new Promise(resolve=>setTimeout(resolve,20))
 
-let canvas = tempDiv.querySelector("canvas")
+let canvas = qrDiv.querySelector("canvas")
 
 let data = canvas.toDataURL("image/png").split(",")[1]
 
@@ -231,12 +244,10 @@ zip.file(cleanName + ".png", data, {base64:true})
 
 }
 
-let content = await zip.generateAsync({type:"blob"})
+window.generatedZip = zip
 
-let link = document.createElement("a")
-link.href = URL.createObjectURL(content)
-link.download = "All_QR_Codes.zip"
-link.click()
+document.getElementById("downloadZip").style.display="inline-block"
+document.getElementById("downloadSeparate").style.display="inline-block"
 
 }
 
@@ -264,29 +275,11 @@ link.click()
 
 async function downloadZip(){
 
-let zip = new JSZip()
+let content = await window.generatedZip.generateAsync({type:"blob"})
 
-let items = document.querySelectorAll(".bulkItem")
-
-for(let item of items){
-
-let name=item.querySelector("p").innerText
-.replace(/[,]/g,"")
-.replace(/[\\/:*?"<>|]/g,"")
-
-let canvas = item.querySelector("canvas")
-
-let data = canvas.toDataURL("image/png").split(",")[1]
-
-zip.file(name + ".png", data, {base64:true})
-
-}
-
-let content = await zip.generateAsync({type:"blob"})
-
-let link = document.createElement("a")
-link.href = URL.createObjectURL(content)
-link.download = "All_QR_Codes.zip"
+let link=document.createElement("a")
+link.href=URL.createObjectURL(content)
+link.download="All_QR_Codes.zip"
 link.click()
 
 }
