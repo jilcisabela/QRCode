@@ -109,14 +109,12 @@ transform:scale(1.05);
 <input id="lastName" placeholder="Last Name" onkeyup="generateQR()">
 <input id="suffix" placeholder="Suffix (optional)" onkeyup="generateQR()">
 
-
-
 <div id="qrcode"></div>
 
 <button id="downloadBtn" class="primary" onclick="downloadQR()" style="display:none">
 Download QR
 </button>
-
+<div id="hiddenQR" style="display:none"></div>
 </div>
 
 <div id="bulkSection" style="display:none">
@@ -226,23 +224,23 @@ let name=names[i];
 document.getElementById("status").innerText =
 "Generating " + (i+1) + " / " + names.length;
 
-let temp=document.createElement("div");
-temp.style.display="none";
-document.body.appendChild(temp);
+let temp = document.getElementById("hiddenQR");
+temp.innerHTML = "";
 
 new QRCode(temp,{
 text:name,
 width:220,
-height:220
+height:220,
+useSVG:false
 });
 
 
 let canvas = null;
 let img = null;
 
-for(let t=0;t<10;t++){
+ffor(let t=0;t<30;t++){
 
-await new Promise(r=>setTimeout(r,50));
+await new Promise(r=>setTimeout(r,80));
 
 canvas = temp.querySelector("canvas");
 img = temp.querySelector("img");
@@ -258,10 +256,10 @@ data = canvas.toDataURL("image/png").split(",")[1];
 }else if(img){
 data = img.src.split(",")[1];
 }else{
-document.body.removeChild(temp);
+console.log("QR failed for:", name);
 continue;
 }
-document.body.removeChild(temp);
+
 
 
 let cleanName=name
