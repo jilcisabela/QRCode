@@ -192,25 +192,54 @@ height:220
 document.getElementById("downloadBtn").style.display="inline-block"
 
 }
+
+
 async function generateBulk(){
 
 let names=document.getElementById("bulkNames")
 .value
 .split("\n")
-.map(n => n.trim())
-.filter(n => n !== "")
+.map(n=>n.trim())
+.filter(n=>n!=="")
 
-if(names.length > 1000){
-alert("Maximum 1000 names only")
+if(names.length > 5000){
+alert("Maximum 5000 names allowed")
 return
 }
 
 let result=document.getElementById("bulkResult")
 result.innerHTML=""
 
-let zip = new JSZip()
+let zip=new JSZip()
 
-for(let name of names){
+let previewLimit=30
+
+for(let i=0;i<names.length;i++){
+
+let name=names[i]
+
+let temp=document.createElement("div")
+
+let qr=new QRCode(temp,{
+text:name,
+width:220,
+height:220
+})
+
+await new Promise(r=>setTimeout(r,10))
+
+let canvas=temp.querySelector("canvas")
+
+let data=canvas.toDataURL("image/png").split(",")[1]
+
+let cleanName=name
+.replace(/[,]/g,"")
+.replace(/[\\/:*?"<>|]/g,"")
+
+zip.file(cleanName+".png",data,{base64:true})
+
+/* show preview only */
+if(i < previewLimit){
 
 let div=document.createElement("div")
 div.className="bulkItem"
@@ -224,52 +253,20 @@ div.appendChild(label)
 
 result.appendChild(div)
 
-let qr=new QRCode(qrDiv,{
+new QRCode(qrDiv,{
 text:name,
 width:220,
 height:220
 })
 
-await new Promise(resolve=>setTimeout(resolve,20))
-
-let canvas = qrDiv.querySelector("canvas")
-
-let data = canvas.toDataURL("image/png").split(",")[1]
-
-let cleanName = name
-.replace(/[,]/g,"")
-.replace(/[\\/:*?"<>|]/g,"")
-
-zip.file(cleanName + ".png", data, {base64:true})
+}
 
 }
 
-window.generatedZip = zip
+window.generatedZip=zip
 
 document.getElementById("downloadZip").style.display="inline-block"
 document.getElementById("downloadSeparate").style.display="inline-block"
-
-}
-
-function downloadAll(){
-
-document.querySelectorAll(".bulkItem").forEach(item=>{
-
-let name=item.querySelector("p").innerText
-.replace(/[,]/g,"")
-.replace(/[\\/:*?"<>|]/g,"")
-
-let canvas=item.querySelector("canvas")
-
-let link=document.createElement("a")
-
-link.href=canvas.toDataURL("image/png")
-
-link.download=name+".png"
-
-link.click()
-
-})
 
 }
 
