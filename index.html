@@ -193,6 +193,8 @@ document.getElementById("downloadBtn").style.display="inline-block"
 
 async function generateBulk(){
 
+window.generatedZip = null;
+
 let names=document.getElementById("bulkNames")
 .value
 .split("\n")
@@ -234,10 +236,20 @@ width:220,
 height:220
 });
 
-await new Promise(r=>setTimeout(r,3000));
 
-let canvas = temp.querySelector("canvas");
-let img = temp.querySelector("img");
+let canvas = null;
+let img = null;
+
+for(let t=0;t<20;t++){
+
+await new Promise(r=>setTimeout(r,80));
+
+canvas = temp.querySelector("canvas");
+img = temp.querySelector("img");
+
+if(canvas || img) break;
+
+}
 
 let data;
 
@@ -288,10 +300,14 @@ btn.innerText="Download All QR (ZIP)";
 btn.disabled = false;
 
 document.getElementById("status").innerText="QR codes ready. Click Download ZIP.";
-
+btn.scrollIntoView({behavior:"smooth"});
 }
 
 async function downloadZip(){
+if(!window.generatedZip){
+alert("Please generate QR codes first.");
+return;
+}
 
 let content = await window.generatedZip.generateAsync({type:"blob"})
 
