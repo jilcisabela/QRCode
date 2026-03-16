@@ -209,7 +209,7 @@ result.innerHTML=""
 
 let zip=new JSZip()
 
-let previewLimit=30
+let previewLimit=names.length
 
 for(let i=0;i<names.length;i++){
 
@@ -270,7 +270,7 @@ document.getElementById("status").innerText =
 window.generatedZip=zip
 
 document.getElementById("downloadZip").style.display="inline-block"
-document.getElementById("downloadSeparate").style.display="inline-block"
+
 document.getElementById("status").innerText = "QR codes ready. Click Download ZIP."
 }
 
