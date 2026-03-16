@@ -86,7 +86,7 @@ text-align:center;
 
 button:hover{
 opacity:0.9;
-transform:scale(1.53);
+transform:scale(1.05);
 }
 
 </style>
@@ -197,83 +197,76 @@ let names=document.getElementById("bulkNames")
 .value
 .split("\n")
 .map(n=>n.trim())
-.filter(n=>n!=="")
+.filter(n=>n!=="");
 
 if(names.length > 5000){
-alert("Maximum 5000 names allowed")
-return
+alert("Maximum 5000 names allowed");
+return;
 }
 
-let result=document.getElementById("bulkResult")
-result.innerHTML=""
+let result=document.getElementById("bulkResult");
+result.innerHTML="";
 
-let zip=new JSZip()
+let zip=new JSZip();
 
-let previewLimit=names.length
+/* SHOW BUTTON EARLY */
+let btn=document.getElementById("downloadZip");
+btn.style.display="inline-block";
+btn.innerText="Preparing ZIP...";
 
 for(let i=0;i<names.length;i++){
 
-let name=names[i]
+let name=names[i];
 
-let temp=document.createElement("div")
+document.getElementById("status").innerText =
+"Generating " + (i+1) + " / " + names.length;
 
-let qr=new QRCode(temp,{
+let temp=document.createElement("div");
+
+new QRCode(temp,{
 text:name,
 width:220,
 height:220
-})
+});
 
-await new Promise(r=>setTimeout(r,10))
+await new Promise(r=>setTimeout(r,10));
 
-let canvas=temp.querySelector("canvas")
+let canvas=temp.querySelector("canvas");
 
-let data=canvas.toDataURL("image/png").split(",")[1]
+let data=canvas.toDataURL("image/png").split(",")[1];
 
 let cleanName=name
 .replace(/[,]/g,"")
-.replace(/[\\/:*?"<>|]/g,"")
+.replace(/[\\/:*?"<>|]/g,"");
 
-zip.file(cleanName+".png",data,{base64:true})
+zip.file(cleanName+".png",data,{base64:true});
 
-/* show preview only */
-if(i < previewLimit){
+/* preview */
+let div=document.createElement("div");
+div.className="bulkItem";
 
-let div=document.createElement("div")
-div.className="bulkItem"
+let qrDiv=document.createElement("div");
+div.appendChild(qrDiv);
 
-let qrDiv=document.createElement("div")
-div.appendChild(qrDiv)
+let label=document.createElement("p");
+label.innerText=name;
+div.appendChild(label);
 
-let label=document.createElement("p")
-label.innerText=name
-div.appendChild(label)
-
-result.appendChild(div)
+result.appendChild(div);
 
 new QRCode(qrDiv,{
 text:name,
 width:220,
 height:220
-})
+});
 
 }
 
-}
-document.getElementById("status").innerText = "Generating QR codes..."
+window.generatedZip=zip;
 
-for(let i=0;i<names.length;i++){
+btn.innerText="Download All QR (ZIP)";
 
-document.getElementById("status").innerText =
-"Generating " + (i+1) + " / " + names.length
-
-}
-window.generatedZip=zip
-
-let btn = document.getElementById("downloadZip")
-btn.style.display="inline-block"
-btn.innerText="Download All QR (ZIP)"
-
-document.getElementById("status").innerText = "QR codes ready. Click Download ZIP."
+document.getElementById("status").innerText="QR codes ready. Click Download ZIP.";
 }
 
 async function downloadZip(){
