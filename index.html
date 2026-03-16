@@ -131,11 +131,11 @@ Peterson, John"></textarea>
 
 <button class="primary" onclick="generateBulk()">Generate Bulk QR</button>
 
-<div class="bulkResult" id="bulkResult"></div>
-
 <button id="downloadZip" class="primary" onclick="downloadZip()" style="display:none">
-Download as ZIP
+Download All QR (ZIP)
 </button>
+
+<div class="bulkResult" id="bulkResult"></div>
 
 </div>
 
@@ -269,7 +269,9 @@ document.getElementById("status").innerText =
 }
 window.generatedZip=zip
 
-document.getElementById("downloadZip").style.display="inline-block"
+let btn = document.getElementById("downloadZip")
+btn.style.display="inline-block"
+btn.innerText="Download All QR (ZIP)"
 
 document.getElementById("status").innerText = "QR codes ready. Click Download ZIP."
 }
