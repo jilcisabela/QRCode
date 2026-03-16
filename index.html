@@ -127,14 +127,11 @@ Example:
 Dela Cruz, Juan Magnificient
 Dela Cruz, Juan Jr. Magnificient
 Peterson, John"></textarea>
+<p id="status"></p>
 
 <button class="primary" onclick="generateBulk()">Generate Bulk QR</button>
 
 <div class="bulkResult" id="bulkResult"></div>
-
-<button id="downloadSeparate" class="secondary" onclick="downloadAll()" style="display:none">
-Download Separately
-</button>
 
 <button id="downloadZip" class="primary" onclick="downloadZip()" style="display:none">
 Download as ZIP
@@ -262,12 +259,19 @@ height:220
 }
 
 }
+document.getElementById("status").innerText = "Generating QR codes..."
 
+for(let i=0;i<names.length;i++){
+
+document.getElementById("status").innerText =
+"Generating " + (i+1) + " / " + names.length
+
+}
 window.generatedZip=zip
 
 document.getElementById("downloadZip").style.display="inline-block"
 document.getElementById("downloadSeparate").style.display="inline-block"
-
+document.getElementById("status").innerText = "QR codes ready. Click Download ZIP."
 }
 
 async function downloadZip(){
