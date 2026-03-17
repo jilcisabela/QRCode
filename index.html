@@ -115,8 +115,8 @@ bulkSection.style.display="none";
 }
 
 function showBulk(){
-singleSection.style.display="none";
-bulkSection.style.display="block";
+document.getElementById("singleSection").style.display="none";
+document.getElementById("bulkSection").style.display="block";
 }
 
 function generateQR(){
@@ -174,9 +174,13 @@ return;
 let zip=new JSZip();
 let hidden=document.getElementById("hiddenQR");
 
-downloadZipBtn=document.getElementById("downloadZip");
-progressBar.style.display="block";
-progressBar.value=0;
+let downloadZipBtn = document.getElementById("downloadZip");
+let progressBar = document.getElementById("progressBar");
+let bulkResult = document.getElementById("bulkResult");
+let status = document.getElementById("status");
+
+progressBar.style.display = "block";
+progressBar.value = 0;
 
 bulkResult.innerHTML="";
 downloadZipBtn.style.display="none";
@@ -233,6 +237,9 @@ status.innerText="Done!";
 
 downloadZipBtn.style.display="inline-block";
 }
+
+
+
 
 async function downloadZip(){
 if(!window.generatedZip) return;
