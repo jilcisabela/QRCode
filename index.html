@@ -8,6 +8,7 @@
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 
 <style>
 
@@ -31,13 +32,14 @@ h2{
 margin-bottom:20px;
 }
 
-input,textarea{
+input,textarea,select{
 width:100%;
 padding:12px;
 margin:8px 0;
 border-radius:8px;
 border:1px solid #ddd;
 font-size:16px;
+box-sizing:border-box;
 }
 
 button{
@@ -70,23 +72,109 @@ min-height:240px;
 .bulkResult{
 margin-top:20px;
 display:grid;
-grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
 gap:15px;
 }
+
 .bulkItem{
 background:#fafafa;
-padding:10px;
+padding:15px;
 border-radius:10px;
 display:flex;
 flex-direction:column;
 align-items:center;
 justify-content:center;
 text-align:center;
+border:1px solid #e0e0e0;
+}
+
+.bulkItem > div {
+width:100%;
+display:flex;
+justify-content:center;
+}
+
+.bulkItem p {
+margin:8px 0 0 0;
+font-size:13px;
+word-break:break-word;
+font-weight:500;
+color:#333;
 }
 
 button:hover{
 opacity:0.9;
 transform:scale(1.05);
+}
+
+.options-section {
+background:#f9f9f9;
+padding:15px;
+border-radius:8px;
+margin:15px 0;
+border-left:4px solid #2196F3;
+}
+
+.options-section h4 {
+margin-top:0;
+text-align:left;
+}
+
+.option-row {
+display:grid;
+grid-template-columns:1fr 1fr;
+gap:15px;
+margin:10px 0;
+}
+
+@media print {
+  body {
+    background: white;
+    padding: 0;
+  }
+  .container {
+    box-shadow: none;
+    max-width: 100%;
+  }
+  button, .options-section {
+    display: none;
+  }
+}
+
+#printPreview {
+  display: none;
+  background: white;
+  padding: 20px;
+  margin-top: 20px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+#printPreview.show {
+  display: block;
+}
+
+.print-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 20px;
+  page-break-inside: avoid;
+}
+
+.print-item {
+  text-align: center;
+  page-break-inside: avoid;
+}
+
+.print-item > div {
+  display: flex;
+  justify-content: center;
+}
+
+.print-item p {
+  margin: 10px 0 0 0;
+  font-size: 12px;
+  font-weight: 500;
 }
 
 </style>
@@ -97,7 +185,7 @@ transform:scale(1.05);
 
 <div class="container">
 
-<h2>QR Generator</h2>
+<h2>QR Code Generator</h2>
 
 <button class="secondary" onclick="showSingle()">Single Generate</button>
 <button class="secondary" onclick="showBulk()">Bulk Generator</button>
@@ -112,12 +200,34 @@ transform:scale(1.05);
 <div id="qrcode"></div>
 
 <button id="downloadBtn" class="primary" onclick="downloadQR()" style="display:none">
-Download QR
+Download QR Code
 </button>
 <div id="hiddenQR" style="display:none"></div>
 </div>
 
 <div id="bulkSection" style="display:none">
+
+<div class="options-section">
+<h4>Bulk Generation Settings</h4>
+<div class="option-row">
+<div>
+<label>QR Code Size:</label>
+<select id="qrSize">
+<option value="150">Small (150x150)</option>
+<option value="220" selected>Medium (220x220)</option>
+<option value="300">Large (300x300)</option>
+</select>
+</div>
+<div>
+<label>Output Format:</label>
+<select id="outputFormat">
+<option value="zip">ZIP File (PNG)</option>
+<option value="pdf">PDF Sheet</option>
+<option value="preview">Preview Only</option>
+</select>
+</div>
+</div>
+</div>
 
 <textarea id="bulkNames" rows="6"
 placeholder="Paste names (one per line)
@@ -127,21 +237,30 @@ Dela Cruz, Juan Jr. Magnificient
 Peterson, John"></textarea>
 <p id="status"></p>
 
-<button class="primary" onclick="generateBulk()">Generate Bulk QR</button>
+<button class="primary" onclick="generateBulk()">Generate Bulk QR Codes</button>
 
 <button id="downloadZip" class="primary" onclick="downloadZip()" style="display:none">
 Download All QR (ZIP)
 </button>
 
+<button id="downloadPdf" class="primary" onclick="downloadPdf()" style="display:none">
+Download as PDF
+</button>
+
 <div class="bulkResult" id="bulkResult"></div>
 
+<div id="printPreview"></div>
+
 </div>
 
 </div>
+
+<div id="hiddenQRContainer" style="display:none"></div>
 
 <script>
 
 let qrText=""
+let bulkQRDataList = [];
 
 function showSingle(){
 document.getElementById("singleSection").style.display="block"
@@ -181,7 +300,10 @@ document.getElementById("qrcode").innerHTML=""
 new QRCode(document.getElementById("qrcode"),{
 text:fullname,
 width:220,
-height:220
+height:220,
+colorDark:"#000000",
+colorLight:"#ffffff",
+correctLevel:QRCode.CorrectLevel.H
 })
 
 document.getElementById("downloadBtn").style.display="inline-block"
@@ -189,15 +311,12 @@ document.getElementById("downloadBtn").style.display="inline-block"
 }
 
 window.onload = function(){
-
-
-
 }
-
 
 async function generateBulk(){
 
 window.generatedZip = null;
+bulkQRDataList = [];
 
 let names=document.getElementById("bulkNames")
 .value
@@ -210,35 +329,44 @@ alert("Maximum 5000 names allowed");
 return;
 }
 
-let result=document.getElementById("bulkResult");
+if(names.length === 0){
+alert("Please enter at least one name");
+return;
+}
 
+let result=document.getElementById("bulkResult");
 result.innerHTML="";
 
+let outputFormat = document.getElementById("outputFormat").value;
+let qrSize = parseInt(document.getElementById("qrSize").value);
 
 let zip=new JSZip();
 let previewLimit = 30;
 
-let btn=document.getElementById("downloadZip");
-btn.style.display="inline-block";
-btn.innerText="Preparing ZIP...";
-btn.disabled = true;
+let downloadZipBtn=document.getElementById("downloadZip");
+let downloadPdfBtn=document.getElementById("downloadPdf");
+downloadZipBtn.style.display="none";
+downloadPdfBtn.style.display="none";
 
-
+let hiddenQRContainer = document.getElementById("hiddenQRContainer");
 
 for(let i=0;i<names.length;i++){
 
 let name=names[i];
 
 document.getElementById("status").innerText =
-"Generating " + (i+1) + " / " + names.length;
+"Generating " + (i+1) + " / " + names.length + " QR codes...";
 
 hiddenQRContainer.innerHTML = "";
 
 // create a fresh QR instance every time
 new QRCode(hiddenQRContainer, {
     text: name,
-    width: 220,
-    height: 220
+    width: qrSize,
+    height: qrSize,
+    colorDark: "#000000",
+    colorLight: "#ffffff",
+    correctLevel: QRCode.CorrectLevel.H
 });
 
 await new Promise(requestAnimationFrame);
@@ -270,6 +398,13 @@ let cleanName=name
 
 zip.file(cleanName+".png",data,{base64:true});
 
+// Store for PDF generation
+bulkQRDataList.push({
+  name: name,
+  data: data,
+  cleanName: cleanName
+});
+
 /* preview first 30 */
 if(i < previewLimit){
 
@@ -281,19 +416,23 @@ div.appendChild(qrDiv);
 
 let label=document.createElement("p");
 label.innerText=name;
+label.title=name;
 div.appendChild(label);
 
 result.appendChild(div);
 
 new QRCode(qrDiv,{
 text:name,
-width:220,
-height:220
+width:qrSize,
+height:qrSize,
+colorDark:"#000000",
+colorLight:"#ffffff",
+correctLevel:QRCode.CorrectLevel.H
 });
 
 }
 
-/* allow browser to breathe every 50 loops */
+/* allow browser to breathe every 20 loops */
 if(i % 20 === 0){
 await new Promise(requestAnimationFrame);
 }
@@ -302,12 +441,24 @@ await new Promise(requestAnimationFrame);
 
 window.generatedZip=zip;
 
-btn.innerText="Download All QR (ZIP)";
-btn.disabled=false;
+if(previewLimit < names.length) {
+document.getElementById("status").innerText=`Generated ${names.length} QR codes. Showing first ${previewLimit} in preview.`;
+} else {
+document.getElementById("status").innerText=`All ${names.length} QR codes ready!`;
+}
 
-document.getElementById("status").innerText="QR codes ready. Click Download ZIP.";
+if(outputFormat === "zip"){
+downloadZipBtn.style.display="inline-block";
+downloadZipBtn.scrollIntoView({behavior:"smooth"});
+}
+else if(outputFormat === "pdf"){
+downloadPdfBtn.style.display="inline-block";
+downloadPdfBtn.scrollIntoView({behavior:"smooth"});
+}
+else if(outputFormat === "preview"){
+document.getElementById("bulkResult").scrollIntoView({behavior:"smooth"});
+}
 
-btn.scrollIntoView({behavior:"smooth"});
 }
 
 async function downloadZip(){
@@ -320,9 +471,40 @@ let content = await window.generatedZip.generateAsync({type:"blob"})
 
 let link=document.createElement("a")
 link.href=URL.createObjectURL(content)
-link.download="All_QR_Codes.zip"
+link.download="QR_Codes_" + new Date().getTime() + ".zip"
 link.click()
 
+}
+
+async function downloadPdf(){
+if(bulkQRDataList.length === 0){
+alert("Please generate QR codes first.");
+return;
+}
+
+let element = document.createElement("div");
+element.innerHTML = `<h2 style="text-align:center;margin:20px 0;">QR Code Sheet</h2><div class="print-grid">`;
+
+for(let item of bulkQRDataList) {
+element.innerHTML += `
+<div class="print-item">
+  <div><img src="data:image/png;base64,${item.data}" style="width:200px;height:200px;"></div>
+  <p>${item.name}</p>
+</div>
+`;
+}
+
+element.innerHTML += `</div>`;
+
+const opt = {
+  margin: 10,
+  filename: 'QR_Codes_Sheet_' + new Date().getTime() + '.pdf',
+  image: { type: 'png', quality: 0.98 },
+  html2canvas: { scale: 2 },
+  jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+};
+
+html2pdf().set(opt).from(element).save();
 }
 
 function downloadQR(){
