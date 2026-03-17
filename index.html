@@ -321,7 +321,7 @@ button:disabled {
 
 </div>
 
-<div id="hiddenQR"></div>
+
 
 <script>
 let singleQRText = "";
@@ -415,8 +415,7 @@ if (typeof QRCode === "undefined" || typeof JSZip === "undefined") {
 
     let qrSize = parseInt(document.getElementById("qrSize").value);
     let previewLimit = parseInt(document.getElementById("previewLimit").value);
-    let hiddenQR = document.getElementById("hiddenQR");
-
+    
     bulkQRData = [];
     generatedZip = new JSZip();
 
@@ -443,10 +442,6 @@ await QRCode.toCanvas(canvas, name, {
     light: '#ffffff'
   }
 });
-
-      let canvas = hiddenQR.querySelector("canvas");
-
-      if (!canvas) continue;
 
       let qrDataUrl = canvas.toDataURL("image/png");
       let base64Data = qrDataUrl.split("base64,")[1];
