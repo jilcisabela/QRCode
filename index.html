@@ -274,7 +274,7 @@ let cleanName=name
 .trim();
 
 zip.file(cleanName+".png",data,{base64:true});
-
+hiddenQRContainer.innerHTML = "";
 /* preview first 30 */
 if(i < previewLimit){
 
@@ -300,17 +300,7 @@ height:220
 
 /* allow browser to breathe every 50 loops */
 if(i % 20 === 0){
-let canvas = null;
-let img = null;
-
-for(let t=0;t<20;t++){
-    canvas = hiddenQRContainer.querySelector("canvas");
-    img = hiddenQRContainer.querySelector("img");
-    if(canvas || img) break;
-    await new Promise(r => setTimeout(r, 20));
-}
-}
-
+    await new Promise(r => setTimeout(r, 50));
 }
 
 window.generatedZip=zip;
