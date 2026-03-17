@@ -425,32 +425,27 @@ if (typeof QRCode === "undefined" || typeof JSZip === "undefined") {
     document.getElementById("generateBtn").disabled = true;
 
     for (let i = 0; i < namesList.length; i++) {
-      let name = namesList[i];
+  let name = namesList[i];
 
-      showStatus(`Processing: ${i + 1} / ${namesList.length}`);
+  showStatus(`Processing: ${i + 1} / ${namesList.length}`);
 
-      
-      // ✅ FIXED: use await directly (no callback)
-      let canvas = document.createElement("canvas");
+  let canvas = document.createElement("canvas");
 
-await QRCode.toCanvas(canvas, name, {
-  errorCorrectionLevel: 'M',
-  margin: 1,
-  width: qrSize,
-  color: {
-    dark: '#000000',
-    light: '#ffffff'
-  }
-});
+  await QRCode.toCanvas(canvas, name, {
+    errorCorrectionLevel: 'M',
+    margin: 1,
+    width: qrSize,
+    color: {
+      dark: '#000000',
+      light: '#ffffff'
+    }
+  });
 
-      let qrDataUrl = canvas.toDataURL("image/png");
-      let base64Data = qrDataUrl.split("base64,")[1];
+  // ✅ ADD THIS LINE (VERY IMPORTANT)
+  await new Promise(resolve => setTimeout(resolve, 1));
 
-      bulkQRData.push({
-        name: name,
-        dataUrl: qrDataUrl,
-        base64: base64Data
-      });
+  let qrDataUrl = canvas.toDataURL("image/png");
+  let base64Data = qrDataUrl.split("base64,")[1];
 
       let cleanName = name
         .replace(/[,]/g, "")
