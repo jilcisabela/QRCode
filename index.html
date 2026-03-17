@@ -239,13 +239,30 @@ document.getElementById("status").innerText =
 "Generating " + (i+1) + " / " + names.length;
 
 hiddenQRContainer.innerHTML="";
+
+let attempts = 0;
+let canvas, img;
+
+while(attempts < 5){
+
 hiddenQR.makeCode(name);
 
-// wait for QR to render
 await new Promise(requestAnimationFrame);
 
-let canvas = hiddenQRContainer.querySelector("canvas");
-let img = hiddenQRContainer.querySelector("img");
+canvas = hiddenQRContainer.querySelector("canvas");
+img = hiddenQRContainer.querySelector("img");
+
+if(canvas || img){
+break;
+}
+
+attempts++;
+}
+
+if(!canvas && !img){
+console.log("QR failed:", name);
+continue;
+}
 
 let data;
 
