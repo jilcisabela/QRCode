@@ -241,7 +241,7 @@ new QRCode(hiddenQRContainer, {
     height: 220
 });
 
-await new Promise(requestAnimationFrame);
+await new Promise(resolve => setTimeout(resolve, 50));
 
 let canvas = hiddenQRContainer.querySelector("canvas");
 let img = hiddenQRContainer.querySelector("img");
@@ -295,7 +295,7 @@ height:220
 
 /* allow browser to breathe every 50 loops */
 if(i % 20 === 0){
-await new Promise(requestAnimationFrame);
+await new Promise(resolve => setTimeout(resolve, 50));
 }
 
 }
