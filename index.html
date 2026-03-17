@@ -1,519 +1,345 @@
-co<!DOCTYPE html>
+<!DOCTYPE html>
 <html>
 <head>
+
 <meta name="viewport" content="width=device-width, initial-scale=1">
+
 <title>QR Name Generator</title>
 
-<script src="qrcode.min.js"></script>
-<script src="jszip.min.js"></script>
-
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 <style>
-* {
-  box-sizing: border-box;
+
+body{
+font-family:Arial;
+background:#f4f6fb;
+padding:20px;
 }
 
-body {
-  font-family: Arial, sans-serif;
-  background: #f4f6fb;
-  padding: 20px;
-  margin: 0;
+.container{
+max-width:900px;
+margin:auto;
+background:white;
+padding:25px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+text-align:center;
 }
 
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  background: white;
-  padding: 25px;
-  border-radius: 15px;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+h2{
+margin-bottom:20px;
 }
 
-h2 {
-  text-align: center;
-  color: #333;
-  margin-bottom: 30px;
+input,textarea{
+width:100%;
+padding:12px;
+margin:8px 0;
+border-radius:8px;
+border:1px solid #ddd;
+font-size:16px;
 }
 
-.tabs {
-  display: flex;
-  gap: 10px;
-  margin-bottom: 20px;
-  justify-content: center;
-  flex-wrap: wrap;
+button{
+padding:12px 20px;
+margin:5px;
+border:none;
+border-radius:8px;
+font-size:15px;
+cursor:pointer;
 }
 
-.tab-btn {
-  padding: 10px 20px;
-  border: none;
-  background: #2196F3;
-  color: white;
-  border-radius: 5px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: bold;
-  transition: all 0.3s;
+.primary{
+background:#4CAF50;
+color:white;
 }
 
-.tab-btn:hover {
-  background: #1976D2;
+.secondary{
+background:#2196F3;
+color:white;
 }
 
-.tab-btn.active {
-  background: #1565C0;
+#qrcode{
+margin-top:20px;
+display:flex;
+justify-content:center;
+align-items:center;
+min-height:240px;
 }
 
-.tab-content {
-  display: none;
+.bulkResult{
+margin-top:20px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:15px;
+}
+.bulkItem{
+background:#fafafa;
+padding:10px;
+border-radius:10px;
+display:flex;
+flex-direction:column;
+align-items:center;
+justify-content:center;
+text-align:center;
 }
 
-.tab-content.active {
-  display: block;
+button:hover{
+opacity:0.9;
+transform:scale(1.05);
 }
 
-input, textarea, select {
-  width: 100%;
-  padding: 12px;
-  margin: 8px 0 15px 0;
-  border: 1px solid #ddd;
-  border-radius: 8px;
-  font-size: 14px;
-  font-family: Arial, sans-serif;
-}
-
-label {
-  display: block;
-  margin: 15px 0 5px 0;
-  font-weight: bold;
-  color: #333;
-}
-
-button {
-  padding: 12px 25px;
-  margin: 5px 5px 5px 0;
-  border: none;
-  border-radius: 8px;
-  font-size: 14px;
-  font-weight: bold;
-  cursor: pointer;
-  background: #4CAF50;
-  color: white;
-  transition: all 0.3s;
-}
-
-button:hover:not(:disabled) {
-  background: #45a049;
-  transform: translateY(-2px);
-}
-
-button:disabled {
-  background: #cccccc;
-  cursor: not-allowed;
-}
-
-.button-group {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin: 15px 0;
-}
-
-#qrcode {
-  margin: 20px 0;
-  text-align: center;
-  min-height: 270px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-#qrcode canvas {
-  border: 2px solid #ddd;
-  border-radius: 8px;
-  padding: 10px;
-  background: white;
-  max-width: 100%;
-}
-
-.controls {
-  background: #f9f9f9;
-  padding: 15px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-  border-left: 4px solid #2196F3;
-}
-
-.controls-row {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 15px;
-}
-
-#status {
-  background: #e8f5e9;
-  padding: 12px 15px;
-  border-radius: 5px;
-  margin: 15px 0;
-  border-left: 4px solid #4CAF50;
-  font-weight: bold;
-  color: #2e7d32;
-  display: none;
-}
-
-#status.show {
-  display: block;
-}
-
-#status.error {
-  background: #ffebee;
-  border-left-color: #c62828;
-  color: #c62828;
-}
-
-#status.complete {
-  background: #c8e6c9;
-  border-left-color: #2e7d32;
-  color: #1b5e20;
-}
-
-.bulkResult {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 15px;
-  margin-top: 20px;
-}
-
-.bulkItem {
-  background: #fafafa;
-  padding: 12px;
-  border-radius: 8px;
-  text-align: center;
-  border: 1px solid #e0e0e0;
-  transition: all 0.3s;
-}
-
-.bulkItem:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-}
-
-.bulkItem canvas {
-  width: 100%;
-  max-width: 150px;
-  margin: 0 auto;
-  display: block;
-  border: 1px solid #ddd;
-  padding: 5px;
-  border-radius: 5px;
-  background: white;
-}
-
-.bulkItem p {
-  margin: 8px 0 0 0;
-  font-size: 11px;
-  font-weight: bold;
-  word-break: break-word;
-  color: #555;
-  max-height: 40px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-#hiddenQR {
-  position: fixed;
-  left: -9999px;
-  top: -9999px;
-  width: 400px;
-  height: 400px;
-  visibility: hidden;
-}
-
-@media (max-width: 768px) {
-  .controls-row {
-    grid-template-columns: 1fr;
-  }
-  .bulkResult {
-    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  }
-  .button-group {
-    flex-direction: column;
-  }
-  button {
-    width: 100%;
-  }
-}
 </style>
+
 </head>
 
 <body>
 
 <div class="container">
-  <h2>QR Code Generator</h2>
 
-  <div class="tabs">
-    	<button class="tab-btn active" onclick="switchTab('single', this)">Single QR</button>
-	<button class="tab-btn" onclick="switchTab('bulk', this)">Bulk QR</button>
-  </div>
+<h2>QR Generator</h2>
 
-  <!-- SINGLE TAB -->
-  <div id="single" class="tab-content active">
-    <label>First Name:</label>
-    <input type="text" id="firstName" placeholder="Enter first name" onkeyup="generateSingleQR()">
+<button class="secondary" onclick="showSingle()">Single Generate</button>
+<button class="secondary" onclick="showBulk()">Bulk Generator</button>
 
-    <label>Middle Name (Optional):</label>
-    <input type="text" id="middleName" placeholder="Enter middle name" onkeyup="generateSingleQR()">
+<div id="singleSection">
 
-    <label>Last Name:</label>
-    <input type="text" id="lastName" placeholder="Enter last name" onkeyup="generateSingleQR()">
+<input id="firstName" placeholder="First Name" onkeyup="generateQR()">
+<input id="middleName" placeholder="Middle Name" onkeyup="generateQR()">
+<input id="lastName" placeholder="Last Name" onkeyup="generateQR()">
+<input id="suffix" placeholder="Suffix (optional)" onkeyup="generateQR()">
 
-    <label>Suffix (Optional):</label>
-    <input type="text" id="suffix" placeholder="e.g., Jr., Sr." onkeyup="generateSingleQR()">
+<div id="qrcode"></div>
 
-    <div id="qrcode"></div>
+<button id="downloadBtn" class="primary" onclick="downloadQR()" style="display:none">
+Download QR
+</button>
+<div id="hiddenQR" style="display:none"></div>
+</div>
 
-    <div class="button-group">
-      <button id="downloadSingleBtn" onclick="downloadSingleQR()" style="display:none; background: #2196F3;">
-        📥 Download QR Code
-      </button>
-    </div>
-  </div>
+<div id="bulkSection" style="display:none">
 
-  <!-- BULK TAB -->
-  <div id="bulk" class="tab-content">
-    <div class="controls">
-      <label>Generation Settings</label>
-      <div class="controls-row">
-        <div>
-          <label>QR Code Size:</label>
-          <select id="qrSize">
-            <option value="200">Small (200x200)</option>
-            <option value="250" selected>Medium (250x250)</option>
-            <option value="300">Large (300x300)</option>
-          </select>
-        </div>
-        <div>
-          <label>Preview Items:</label>
-          <select id="previewLimit">
-            <option value="20">Show first 20</option>
-            <option value="50" selected>Show first 50</option>
-            <option value="100">Show first 100</option>
-            <option value="10000">Show all</option>
-          </select>
-        </div>
-      </div>
-    </div>
+<textarea id="bulkNames" rows="6"
+placeholder="Paste names (one per line)
+Example:
+Dela Cruz, Juan Magnificient
+Dela Cruz, Juan Jr. Magnificient
+Peterson, John"></textarea>
+<p id="status"></p>
 
-    <label>Enter Names (one per line):</label>
-    <textarea id="bulkNames" rows="8" placeholder="Dela Cruz, Juan Magnificient&#10;Dela Cruz, Juan Jr. Magnificient&#10;Peterson, John&#10;Smith, Mary Jane"></textarea>
+<button class="primary" onclick="generateBulk()">Generate Bulk QR</button>
 
-    <div class="button-group">
-      <button id="generateBtn" onclick="generateBulkQR()" style="background: #4CAF50;">
-        ⚙️ Generate QR Codes
-      </button>
-      <button id="downloadZipBtn" onclick="downloadZip()" style="display:none; background: #FF9800;">
-        📦 Download All as ZIP
-      </button>
-    </div>
+<button id="downloadZip" class="primary" onclick="downloadZip()" style="display:none">
+Download All QR (ZIP)
+</button>
 
-    <div id="status"></div>
-
-    <div class="bulkResult" id="bulkResult"></div>
-  </div>
+<div class="bulkResult" id="bulkResult"></div>
 
 </div>
 
-
+</div>
 
 <script>
-let singleQRText = "";
-let bulkQRData = [];
-let generatedZip = null;
-let isGenerating = false;
 
-function switchTab(tabName, btn) {
-  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
-  
-  document.getElementById(tabName).classList.add('active');
-  btn.classList.add('active');
+let qrText=""
+
+function showSingle(){
+document.getElementById("singleSection").style.display="block"
+document.getElementById("bulkSection").style.display="none"
 }
 
-// ===== SINGLE QR GENERATION =====
-function generateSingleQR() {
-  let first = document.getElementById("firstName").value.trim();
-  let middle = document.getElementById("middleName").value.trim();
-  let last = document.getElementById("lastName").value.trim();
-  let suffix = document.getElementById("suffix").value.trim();
-
-  if (first === "" || last === "") {
-    document.getElementById("qrcode").innerHTML = "";
-    document.getElementById("downloadSingleBtn").style.display = "none";
-    return;
-  }
-
-  let fullname = last + ", " + first;
-  if (middle) fullname += " " + middle;
-  if (suffix) fullname += " " + suffix;
-
-  singleQRText = fullname;
-
-  document.getElementById("qrcode").innerHTML = "";
-  
-  try {
-    QRCode.toCanvas(document.getElementById("qrcode"), fullname, {
-      errorCorrectionLevel: 'M',
-      type: 'image/png',
-      quality: 0.95,
-      margin: 1,
-      width: 280,
-      color: {
-        dark: '#000000',
-        light: '#ffffff'
-      }
-    }, function(error) {
-      if (error) {
-        console.error('QR Code generation error:', error);
-        document.getElementById("qrcode").innerHTML = "<p style='color:red;'>Error generating QR code</p>";
-      } else {
-        document.getElementById("downloadSingleBtn").style.display = "inline-block";
-      }
-    });
-  } catch (err) {
-    console.error("QR Generation Error:", err);
-    document.getElementById("qrcode").innerHTML = "<p style='color:red;'>Error generating QR code</p>";
-  }
+function showBulk(){
+document.getElementById("singleSection").style.display="none"
+document.getElementById("bulkSection").style.display="block"
 }
 
-function downloadSingleQR() {
-  let canvas = document.querySelector("#qrcode canvas");
-  
-  if (!canvas) return;
+function generateQR(){
 
-  let link = document.createElement("a");
-  link.href = canvas.toDataURL("image/png");
-  link.download = singleQRText.replace(/[,\s]/g, "_") + ".png";
-  link.click();
+let first=document.getElementById("firstName").value.trim()
+let middle=document.getElementById("middleName").value.trim()
+let last=document.getElementById("lastName").value.trim()
+let suffix=document.getElementById("suffix").value.trim()
+
+if(first=="" || last==""){
+document.getElementById("qrcode").innerHTML=""
+document.getElementById("downloadBtn").style.display="none"
+return
 }
 
-// ===== BULK QR GENERATION =====
+let fullname="";
 
-
-async function generateBulkQR() {
-
-  try {
-    let namesList = document.getElementById("bulkNames").value
-      .split("\n")
-      .map(n => n.trim())
-      .filter(n => n !== "");
-
-    if (namesList.length === 0) {
-      showStatus("Please enter at least one name", "error");
-      return;
-    }
-
-    let qrSize = parseInt(document.getElementById("qrSize").value);
-    let previewLimit = parseInt(document.getElementById("previewLimit").value);
-    
-    bulkQRData = [];
-    generatedZip = new JSZip();
-
-    document.getElementById("bulkResult").innerHTML = "";
-    document.getElementById("downloadZipBtn").style.display = "none";
-
-    document.getElementById("generateBtn").disabled = true;
-
-    for (let i = 0; i < namesList.length; i++) {
-  let name = namesList[i];
-
-  showStatus(`Processing: ${i + 1} / ${namesList.length}`);
-
-  let canvas = document.createElement("canvas");
-
-  await QRCode.toCanvas(canvas, name, {
-    errorCorrectionLevel: 'M',
-    margin: 1,
-    width: qrSize,
-    color: {
-      dark: '#000000',
-      light: '#ffffff'
-    }
-  });
-
-  // ✅ ADD THIS LINE (VERY IMPORTANT)
-  await new Promise(resolve => setTimeout(resolve, 1));
-
-  let qrDataUrl = canvas.toDataURL("image/png");
-  let base64Data = qrDataUrl.split("base64,")[1];
-
-      let cleanName = name
-        .replace(/[,]/g, "")
-        .replace(/[\\/:*?"<>|]/g, "")
-        .replace(/\s+/g, "_")
-        .substring(0, 100);
-
-      generatedZip.file(cleanName + ".png", base64Data, { base64: true });
-
-      // Preview
-      if (i < previewLimit) {
-        let itemDiv = document.createElement("div");
-        itemDiv.className = "bulkItem";
-
-        let canvasClone = canvas.cloneNode(true);
-        itemDiv.appendChild(canvasClone);
-
-        let nameLabel = document.createElement("p");
-        nameLabel.innerText = name;
-
-        itemDiv.appendChild(nameLabel);
-
-        document.getElementById("bulkResult").appendChild(itemDiv);
-      }
-    }
-
-    showStatus(`✓ Successfully generated ${bulkQRData.length} QR codes!`, "complete");
-    document.getElementById("downloadZipBtn").style.display = "inline-block";
-
-  } catch (err) {
-    console.error(err);
-    showStatus("Something went wrong: " + err.message, "error");
-  } finally {
-    document.getElementById("generateBtn").disabled = false;
-  }
+if(suffix){
+fullname = last + ", " + first + " " + suffix + (middle ? " " + middle : "");
+}else{
+fullname = last + ", " + first + (middle ? " " + middle : "");
 }
 
-async function downloadZip() {
-  if (!generatedZip || bulkQRData.length === 0) {
-    showStatus("Please generate QR codes first", "error");
-    return;
-  }
+qrText=fullname
 
-  document.getElementById("downloadZipBtn").disabled = true;
-  showStatus("Creating ZIP file...");
+document.getElementById("qrcode").innerHTML=""
 
-  try {
-    let content = await generatedZip.generateAsync({ type: "blob" });
-    let link = document.createElement("a");
-    link.href = URL.createObjectURL(content);
-    link.download = "QR_Codes_" + new Date().getTime() + ".zip";
-    link.click();
-    
-    showStatus("✓ ZIP download started! " + bulkQRData.length + " files", "complete");
-  } catch (err) {
-    showStatus("Error creating ZIP: " + err.message, "error");
-  } finally {
-    document.getElementById("downloadZipBtn").disabled = false;
-  }
+new QRCode(document.getElementById("qrcode"),{
+text:fullname,
+width:220,
+height:220
+})
+
+document.getElementById("downloadBtn").style.display="inline-block"
+
 }
 
-function showStatus(message, type = "") {
-  let statusEl = document.getElementById("status");
-  statusEl.innerText = message;
-  statusEl.className = "show " + type;
+window.onload = function(){
+
+
+
 }
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
+
+async function generateBulk(){
+
+window.generatedZip = null;
+
+let names=document.getElementById("bulkNames")
+.value
+.split("\n")
+.map(n=>n.trim())
+.filter(n=>n!=="");
+
+if(names.length > 5000){
+alert("Maximum 5000 names allowed");
+return;
 }
 
+let result=document.getElementById("bulkResult");
+
+result.innerHTML="";
+
+
+let zip=new JSZip();
+let previewLimit = 30;
+
+let btn=document.getElementById("downloadZip");
+btn.style.display="inline-block";
+btn.innerText="Preparing ZIP...";
+btn.disabled = true;
+
+
+
+for(let i=0;i<names.length;i++){
+
+let name=names[i];
+
+document.getElementById("status").innerText =
+"Generating " + (i+1) + " / " + names.length;
+
+hiddenQRContainer.innerHTML = "";
+
+// create a fresh QR instance every time
+new QRCode(hiddenQRContainer, {
+    text: name,
+    width: 220,
+    height: 220
+});
+
+await new Promise(requestAnimationFrame);
+
+let canvas = hiddenQRContainer.querySelector("canvas");
+let img = hiddenQRContainer.querySelector("img");
+
+if(!canvas && !img){
+console.log("QR failed:", name);
+continue;
+}
+
+let data;
+
+if(canvas){
+data = canvas.toDataURL("image/png").split(",")[1];
+}
+else if(img){
+data = img.src.split(",")[1];
+}
+else{
+console.log("QR failed:", name);
+continue;
+}
+
+let cleanName=name
+.replace(/[,]/g,"")
+.replace(/[\\/:*?"<>|]/g,"");
+
+zip.file(cleanName+".png",data,{base64:true});
+
+/* preview first 30 */
+if(i < previewLimit){
+
+let div=document.createElement("div");
+div.className="bulkItem";
+
+let qrDiv=document.createElement("div");
+div.appendChild(qrDiv);
+
+let label=document.createElement("p");
+label.innerText=name;
+div.appendChild(label);
+
+result.appendChild(div);
+
+new QRCode(qrDiv,{
+text:name,
+width:220,
+height:220
+});
+
+}
+
+/* allow browser to breathe every 50 loops */
+if(i % 20 === 0){
+await new Promise(requestAnimationFrame);
+}
+
+}
+
+window.generatedZip=zip;
+
+btn.innerText="Download All QR (ZIP)";
+btn.disabled=false;
+
+document.getElementById("status").innerText="QR codes ready. Click Download ZIP.";
+
+btn.scrollIntoView({behavior:"smooth"});
+}
+
+async function downloadZip(){
+if(!window.generatedZip){
+alert("Please generate QR codes first.");
+return;
+}
+
+let content = await window.generatedZip.generateAsync({type:"blob"})
+
+let link=document.createElement("a")
+link.href=URL.createObjectURL(content)
+link.download="All_QR_Codes.zip"
+link.click()
+
+}
+
+function downloadQR(){
+
+let canvas=document.querySelector("#qrcode canvas")
+
+if(!canvas) return
+
+let link=document.createElement("a")
+
+link.href=canvas.toDataURL("image/png")
+
+link.download=qrText+".png"
+
+link.click()
+
+}
 </script>
 
 </body>
