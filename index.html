@@ -241,10 +241,15 @@ new QRCode(hiddenQRContainer, {
     height: 220
 });
 
-await new Promise(resolve => setTimeout(resolve, 50));
+let canvas = null;
+let img = null;
 
-let canvas = hiddenQRContainer.querySelector("canvas");
-let img = hiddenQRContainer.querySelector("img");
+for(let t=0;t<20;t++){
+    canvas = hiddenQRContainer.querySelector("canvas");
+    img = hiddenQRContainer.querySelector("img");
+    if(canvas || img) break;
+    await new Promise(r => setTimeout(r, 20));
+}
 
 if(!canvas && !img){
 console.log("QR failed:", name);
@@ -295,7 +300,15 @@ height:220
 
 /* allow browser to breathe every 50 loops */
 if(i % 20 === 0){
-await new Promise(resolve => setTimeout(resolve, 50));
+let canvas = null;
+let img = null;
+
+for(let t=0;t<20;t++){
+    canvas = hiddenQRContainer.querySelector("canvas");
+    img = hiddenQRContainer.querySelector("img");
+    if(canvas || img) break;
+    await new Promise(r => setTimeout(r, 20));
+}
 }
 
 }
