@@ -4,8 +4,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR Name Generator</title>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
 
 <style>
 * {
@@ -395,108 +395,27 @@ function downloadSingleQR() {
 
 // ===== BULK QR GENERATION =====
 async function generateBulkQR() {
+  try {
+    let namesList = document.getElementById("bulkNames").value
+      .split("\n")
+      .map(n => n.trim())
+      .filter(n => n !== "");
 
-  let namesList = document.getElementById("bulkNames").value
-    .split("\n")
-    .map(n => n.trim())
-    .filter(n => n !== "");
-
-  if (namesList.length === 0) {
-    showStatus("Please enter at least one name", "error");
-    return;
-  }
-
-  if (namesList.length > 10000) {
-    showStatus("Maximum 10000 names allowed", "error");
-    return;
-  }
-
-  let qrSize = parseInt(document.getElementById("qrSize").value);
-  let previewLimit = parseInt(document.getElementById("previewLimit").value);
-  let hiddenQR = document.getElementById("hiddenQR");
-
-  bulkQRData = [];
-  generatedZip = new JSZip();
-
-  document.getElementById("bulkResult").innerHTML = "";
-  document.getElementById("downloadZipBtn").style.display = "none";
-
-  document.getElementById("generateBtn").disabled = true;
-
-  for (let i = 0; i < namesList.length; i++) {
-
-    let name = namesList[i];
-
-    showStatus(`Processing: ${i + 1} / ${namesList.length}`);
-
-    hiddenQR.innerHTML = "";
-
-    await new Promise((resolve) => {
-
-      QRCode.toCanvas(hiddenQR, name, {
-        errorCorrectionLevel: 'M',
-        margin: 1,
-        width: qrSize,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      }, function () {
-        resolve();
-      });
-
-    });
-
-    await sleep(10);
-
-    let canvas = hiddenQR.querySelector("canvas");
-
-    if (!canvas) continue;
-
-    let qrDataUrl = canvas.toDataURL("image/png");
-    let base64Data = qrDataUrl.split("base64,")[1];
-
-    bulkQRData.push({
-      name: name,
-      dataUrl: qrDataUrl,
-      base64: base64Data
-    });
-
-    let cleanName = name
-      .replace(/[,]/g, "")
-      .replace(/[\\/:*?"<>|]/g, "")
-      .replace(/\s+/g, "_")
-      .substring(0, 100);
-
-    generatedZip.file(cleanName + ".png", base64Data, { base64: true });
-
-    if (i < previewLimit) {
-
-      let itemDiv = document.createElement("div");
-      itemDiv.className = "bulkItem";
-
-      let canvasClone = canvas.cloneNode(true);
-      itemDiv.appendChild(canvasClone);
-
-      let nameLabel = document.createElement("p");
-      nameLabel.innerText = name;
-
-      itemDiv.appendChild(nameLabel);
-
-      document.getElementById("bulkResult").appendChild(itemDiv);
-
+    if (namesList.length === 0) {
+      showStatus("Please enter at least one name", "error");
+      return;
     }
 
-    if ((i + 1) % 30 === 0) {
-      await sleep(50);
-    }
+    document.getElementById("generateBtn").disabled = true;
+
+    // your loop here...
+
+  } catch (err) {
+    console.error(err);
+    showStatus("Something went wrong: " + err.message, "error");
+  } finally {
+    document.getElementById("generateBtn").disabled = false;
   }
-
-  showStatus(`✓ Successfully generated ${bulkQRData.length} QR codes!`, "complete");
-
-  document.getElementById("downloadZipBtn").style.display = "inline-block";
-  document.getElementById("generateBtn").disabled = false;
-
 }
 
 async function downloadZip() {
