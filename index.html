@@ -1,6 +1,8 @@
 <!DOCTYPE html>
 <html>
 <head>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#4CAF50">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR Name Generator PRO</title>
 
@@ -255,6 +257,274 @@ link.click();
 
 status.innerText="Download complete!";
 }
+
+</script>
+
+</body>
+</html>
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>QR Name Generator PRO</title>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+<style>
+body{
+font-family:Arial;
+background:#f4f6fb;
+padding:20px;
+}
+.container{
+max-width:900px;
+margin:auto;
+background:white;
+padding:25px;
+border-radius:15px;
+box-shadow:0 10px 25px rgba(0,0,0,0.1);
+text-align:center;
+}
+input,textarea{
+width:100%;
+padding:12px;
+margin:8px 0;
+border-radius:8px;
+border:1px solid #ddd;
+}
+button{
+padding:12px 20px;
+margin:5px;
+border:none;
+border-radius:8px;
+cursor:pointer;
+}
+.primary{background:#4CAF50;color:white;}
+.secondary{background:#2196F3;color:white;}
+#qrcode{margin-top:20px;min-height:240px;}
+.bulkResult{
+margin-top:20px;
+display:grid;
+grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+gap:15px;
+}
+.bulkItem{
+background:#fafafa;
+padding:10px;
+border-radius:10px;
+}
+progress{
+width:100%;
+height:20px;
+margin-top:10px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="container">
+
+<h2>QR Generator PRO</h2>
+
+<button class="secondary" onclick="showSingle()">Single</button>
+<button class="secondary" onclick="showBulk()">Bulk</button>
+
+<div id="singleSection">
+
+<input id="firstName" placeholder="First Name" onkeyup="generateQR()">
+<input id="middleName" placeholder="Middle Name" onkeyup="generateQR()">
+<input id="lastName" placeholder="Last Name" onkeyup="generateQR()">
+<input id="suffix" placeholder="Suffix" onkeyup="generateQR()">
+
+<div id="qrcode"></div>
+
+<button id="downloadBtn" class="primary" onclick="downloadQR()" style="display:none">
+Download QR
+</button>
+
+</div>
+
+<div id="bulkSection" style="display:none">
+
+<textarea id="bulkNames" rows="6"
+placeholder="One name per line"></textarea>
+
+<p id="status"></p>
+<progress id="progressBar" value="0" max="100" style="display:none"></progress>
+
+<button class="primary" onclick="generateBulk()">Generate Bulk</button>
+
+<button id="downloadZip" class="primary" onclick="downloadZip()" style="display:none">
+Download ZIP
+</button>
+
+<div class="bulkResult" id="bulkResult"></div>
+
+</div>
+
+<div id="hiddenQR" style="display:none"></div>
+
+</div>
+
+<script>
+
+let qrText="";
+
+function showSingle(){
+singleSection.style.display="block";
+bulkSection.style.display="none";
+}
+
+function showBulk(){
+document.getElementById("singleSection").style.display="none";
+document.getElementById("bulkSection").style.display="block";
+}
+
+function generateQR(){
+
+let first=firstName.value.trim();
+let middle=middleName.value.trim();
+let last=lastName.value.trim();
+let suffix=suffix.value.trim();
+
+if(!first || !last){
+qrcode.innerHTML="";
+downloadBtn.style.display="none";
+return;
+}
+
+let fullname = suffix
+? `${last}, ${first} ${suffix}${middle ? " " + middle : ""}`
+: `${last}, ${first}${middle ? " " + middle : ""}`;
+
+qrText=fullname;
+
+$("#qrcode").empty().qrcode({
+text: fullname,
+width: 220,
+height: 220
+});
+
+downloadBtn.style.display="inline-block";
+}
+
+function downloadQR(){
+let canvas=document.querySelector("#qrcode canvas");
+if(!canvas) return;
+
+let link=document.createElement("a");
+link.href=canvas.toDataURL();
+link.download=qrText+".png";
+link.click();
+}
+
+async function generateBulk(){
+
+let names=bulkNames.value
+.split("\n")
+.map(n=>n.trim())
+.filter(n=>n);
+
+if(names.length===0) return;
+
+if(names.length>5000){
+alert("Max 5000 names");
+return;
+}
+
+let zip=new JSZip();
+let hidden=document.getElementById("hiddenQR");
+
+let downloadZipBtn = document.getElementById("downloadZip");
+let progressBar = document.getElementById("progressBar");
+let bulkResult = document.getElementById("bulkResult");
+let status = document.getElementById("status");
+
+progressBar.style.display = "block";
+progressBar.value = 0;
+
+bulkResult.innerHTML="";
+downloadZipBtn.style.display="none";
+
+for(let i=0;i<names.length;i++){
+
+let name=names[i];
+
+status.innerText=`Generating ${i+1}/${names.length}`;
+progressBar.value = (i / names.length) * 100;
+
+$(hidden).empty().qrcode({
+text:name,
+width:220,
+height:220
+});
+
+await new Promise(r=>setTimeout(r,10));
+
+let canvas=hidden.querySelector("canvas");
+if(!canvas) continue;
+
+let data=canvas.toDataURL().split(",")[1];
+
+let clean=name.replace(/[^a-z0-9]/gi,"_");
+
+zip.file(clean+".png",data,{base64:true});
+
+/* preview */
+if(i<30){
+let div=document.createElement("div");
+div.className="bulkItem";
+
+let qr=document.createElement("div");
+div.appendChild(qr);
+
+let label=document.createElement("p");
+label.innerText=name;
+div.appendChild(label);
+
+bulkResult.appendChild(div);
+
+$(qr).qrcode({text:name,width:220,height:220});
+}
+
+/* prevent freeze */
+if(i%20===0) await new Promise(r=>setTimeout(r,10));
+}
+
+window.generatedZip=zip;
+
+progressBar.value=100;
+status.innerText="Done!";
+
+downloadZipBtn.style.display="inline-block";
+}
+
+
+
+
+async function downloadZip(){
+if(!window.generatedZip) return;
+
+status.innerText="Zipping...";
+
+let blob=await window.generatedZip.generateAsync({type:"blob"});
+
+let link=document.createElement("a");
+link.href=URL.createObjectURL(blob);
+link.download="QR_Codes.zip";
+link.click();
+
+status.innerText="Download complete!";
+}
+
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker.register("sw.js")
+    .then(() => console.log("Service Worker Registered"));
+}
+
 
 </script>
 
