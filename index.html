@@ -4,7 +4,7 @@ co<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR Name Generator</title>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode/1.5.3/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 
 
@@ -395,12 +395,13 @@ function downloadSingleQR() {
 }
 
 // ===== BULK QR GENERATION =====
+
+
+async function generateBulkQR() {
 if (typeof QRCode === "undefined" || typeof JSZip === "undefined") {
   showStatus("Libraries not loaded. Check internet or script links.", "error");
   return;
 }
-
-async function generateBulkQR() {
   try {
     let namesList = document.getElementById("bulkNames").value
       .split("\n")
