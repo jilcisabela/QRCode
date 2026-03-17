@@ -1,8 +1,6 @@
 <!DOCTYPE html>
 <html>
 <head>
-<link rel="manifest" href="manifest.json">
-<meta name="theme-color" content="#4CAF50">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR Name Generator PRO</title>
 
@@ -519,12 +517,6 @@ link.click();
 
 status.innerText="Download complete!";
 }
-
-if ("serviceWorker" in navigator) {
-  navigator.serviceWorker.register("sw.js")
-    .then(() => console.log("Service Worker Registered"));
-}
-
 
 </script>
 
