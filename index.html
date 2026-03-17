@@ -359,7 +359,7 @@ function generateSingleQR() {
   
   try {
     QRCode.toCanvas(document.getElementById("qrcode"), fullname, {
-      errorCorrectionLevel: 'H',
+      errorCorrectionLevel: 'M',
       type: 'image/png',
       quality: 0.95,
       margin: 1,
@@ -395,157 +395,76 @@ function downloadSingleQR() {
 
 // ===== BULK QR GENERATION =====
 async function generateBulkQR() {
-  if (isGenerating) {
-    alert("Generation already in progress...");
-    return;
-  }
+for (let i = 0; i < namesList.length; i++) {
 
-  let namesList = document.getElementById("bulkNames").value
-    .split("\n")
-    .map(n => n.trim())
-    .filter(n => n !== "");
+  let name = namesList[i];
 
-  if (namesList.length === 0) {
-    showStatus("Please enter at least one name", "error");
-    return;
-  }
+  showStatus(`Processing: ${i + 1} / ${namesList.length}`);
 
-  if (namesList.length > 10000) {
-    showStatus("Maximum 10000 names allowed", "error");
-    return;
-  }
+  hiddenQR.innerHTML = "";
 
-  isGenerating = true;
-  let qrSize = parseInt(document.getElementById("qrSize").value);
-  let previewLimit = parseInt(document.getElementById("previewLimit").value);
+  await new Promise((resolve) => {
 
-  bulkQRData = [];
-  generatedZip = new JSZip();
-  document.getElementById("bulkResult").innerHTML = "";
-  document.getElementById("downloadZipBtn").style.display = "none";
-  document.getElementById("generateBtn").disabled = true;
-
-  let hiddenQR = document.getElementById("hiddenQR");
-
-  try {
-    const batchSize = 10;
-
-for (let i = 0; i < namesList.length; i += batchSize) {
-  let batch = namesList.slice(i, i + batchSize);
-
-  await Promise.all(batch.map(name => processQR(name)));
-}
-      let name = namesList[i];
-      
-      showStatus(`Processing: ${i + 1} / ${namesList.length}`);
-
-      // Clear previous
-      hiddenQR.innerHTML = "";
-
-      // Generate QR Code using QRCode library (better error handling)
-      await new Promise((resolve, reject) => {
-        try {
-          QRCode.toCanvas(hiddenQR, name, {
-            errorCorrectionLevel: 'H',
-            type: 'image/png',
-            quality: 0.95,
-            margin: 1,
-            width: qrSize,
-            color: {
-              dark: '#000000',
-              light: '#ffffff'
-            }
-          }, function(error) {
-            if (error) {
-              console.warn("Failed to generate QR for:", name, error);
-              reject(error);
-            }
-            resolve();
-          });
-        } catch (err) {
-          console.warn("Failed to generate QR for:", name, err);
-          reject(err);
-        }
-      }).catch(err => {
-        // Continue on error instead of stopping
+    QRCode.toCanvas(hiddenQR, name, {
+      errorCorrectionLevel: 'M',
+      type: 'image/png',
+      margin: 1,
+      width: qrSize,
+      color: {
+        dark: '#000000',
+        light: '#ffffff'
+      }
+    }, function (error) {
+      if (error) {
         console.warn("Skipping:", name);
-        return;
-      });
-
-      // Wait for rendering
-      await sleep(15);
-
-      let canvas = hiddenQR.querySelector("canvas");
-
-      if (!canvas) {
-        console.warn("No canvas found for:", name);
-        continue;
       }
+      resolve();
+    });
 
-      let qrDataUrl = canvas.toDataURL("image/png");
-      let base64Data = qrDataUrl.split("base64,")[1];
+  });
 
-      if (!base64Data) {
-        console.warn("Failed to extract base64 for:", name);
-        continue;
-      }
+  await sleep(10);
 
-      // Store data
-      bulkQRData.push({
-        name: name,
-        dataUrl: qrDataUrl,
-        base64: base64Data
-      });
+  let canvas = hiddenQR.querySelector("canvas");
 
-      // Add to ZIP
-      let cleanName = name
-        .replace(/[,]/g, "")
-        .replace(/[\\/:*?"<>|]/g, "")
-        .substring(0, 100);
+  if (!canvas) continue;
 
-      generatedZip.file(cleanName + ".png", base64Data, { base64: true });
+  let qrDataUrl = canvas.toDataURL("image/png");
+  let base64Data = qrDataUrl.split("base64,")[1];
 
-      // Display preview
-      if (i < previewLimit) {
-        let itemDiv = document.createElement("div");
-        itemDiv.className = "bulkItem";
+  bulkQRData.push({
+    name: name,
+    dataUrl: qrDataUrl,
+    base64: base64Data
+  });
 
-        let canvasClone = canvas.cloneNode(true);
-        itemDiv.appendChild(canvasClone);
+  let cleanName = name
+    .replace(/[,]/g, "")
+    .replace(/[\\/:*?"<>|]/g, "")
+    .replace(/\s+/g, "_")
+    .substring(0, 100);
 
-        let nameLabel = document.createElement("p");
-        nameLabel.innerText = name;
-        nameLabel.title = name;
-        itemDiv.appendChild(nameLabel);
+  generatedZip.file(cleanName + ".png", base64Data, { base64: true });
 
-        document.getElementById("bulkResult").appendChild(itemDiv);
-      }
+  if (i < previewLimit) {
 
-      // Every 30 items, pause
-      if ((i + 1) % 30 === 0) {
-        await sleep(100);
-      }
-    }
+    let itemDiv = document.createElement("div");
+    itemDiv.className = "bulkItem";
 
-    // Show complete message
-    let message = `✓ Successfully generated ${bulkQRData.length} QR codes!`;
-    if (bulkQRData.length !== namesList.length) {
-      message += ` (${namesList.length - bulkQRData.length} failed)`;
-    }
-    if (bulkQRData.length > previewLimit) {
-      message += ` - Showing first ${previewLimit} in preview`;
-    }
-    
-    showStatus(message, "complete");
-    document.getElementById("downloadZipBtn").style.display = "inline-block";
-    document.getElementById("downloadZipBtn").scrollIntoView({ behavior: "smooth" });
+    let canvasClone = canvas.cloneNode(true);
+    itemDiv.appendChild(canvasClone);
 
-  } catch (err) {
-    showStatus("Error: " + err.message, "error");
-    console.error(err);
-  } finally {
-    isGenerating = false;
-    document.getElementById("generateBtn").disabled = false;
+    let nameLabel = document.createElement("p");
+    nameLabel.innerText = name;
+
+    itemDiv.appendChild(nameLabel);
+
+    document.getElementById("bulkResult").appendChild(itemDiv);
+
+  }
+
+  if ((i + 1) % 30 === 0) {
+    await sleep(50);
   }
 }
 
