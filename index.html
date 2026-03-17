@@ -395,77 +395,108 @@ function downloadSingleQR() {
 
 // ===== BULK QR GENERATION =====
 async function generateBulkQR() {
-for (let i = 0; i < namesList.length; i++) {
 
-  let name = namesList[i];
+  let namesList = document.getElementById("bulkNames").value
+    .split("\n")
+    .map(n => n.trim())
+    .filter(n => n !== "");
 
-  showStatus(`Processing: ${i + 1} / ${namesList.length}`);
+  if (namesList.length === 0) {
+    showStatus("Please enter at least one name", "error");
+    return;
+  }
 
-  hiddenQR.innerHTML = "";
+  if (namesList.length > 10000) {
+    showStatus("Maximum 10000 names allowed", "error");
+    return;
+  }
 
-  await new Promise((resolve) => {
+  let qrSize = parseInt(document.getElementById("qrSize").value);
+  let previewLimit = parseInt(document.getElementById("previewLimit").value);
+  let hiddenQR = document.getElementById("hiddenQR");
 
-    QRCode.toCanvas(hiddenQR, name, {
-      errorCorrectionLevel: 'M',
-      type: 'image/png',
-      margin: 1,
-      width: qrSize,
-      color: {
-        dark: '#000000',
-        light: '#ffffff'
-      }
-    }, function (error) {
-      if (error) {
-        console.warn("Skipping:", name);
-      }
-      resolve();
+  bulkQRData = [];
+  generatedZip = new JSZip();
+
+  document.getElementById("bulkResult").innerHTML = "";
+  document.getElementById("downloadZipBtn").style.display = "none";
+
+  document.getElementById("generateBtn").disabled = true;
+
+  for (let i = 0; i < namesList.length; i++) {
+
+    let name = namesList[i];
+
+    showStatus(`Processing: ${i + 1} / ${namesList.length}`);
+
+    hiddenQR.innerHTML = "";
+
+    await new Promise((resolve) => {
+
+      QRCode.toCanvas(hiddenQR, name, {
+        errorCorrectionLevel: 'M',
+        margin: 1,
+        width: qrSize,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      }, function () {
+        resolve();
+      });
+
     });
 
-  });
+    await sleep(10);
 
-  await sleep(10);
+    let canvas = hiddenQR.querySelector("canvas");
 
-  let canvas = hiddenQR.querySelector("canvas");
+    if (!canvas) continue;
 
-  if (!canvas) continue;
+    let qrDataUrl = canvas.toDataURL("image/png");
+    let base64Data = qrDataUrl.split("base64,")[1];
 
-  let qrDataUrl = canvas.toDataURL("image/png");
-  let base64Data = qrDataUrl.split("base64,")[1];
+    bulkQRData.push({
+      name: name,
+      dataUrl: qrDataUrl,
+      base64: base64Data
+    });
 
-  bulkQRData.push({
-    name: name,
-    dataUrl: qrDataUrl,
-    base64: base64Data
-  });
+    let cleanName = name
+      .replace(/[,]/g, "")
+      .replace(/[\\/:*?"<>|]/g, "")
+      .replace(/\s+/g, "_")
+      .substring(0, 100);
 
-  let cleanName = name
-    .replace(/[,]/g, "")
-    .replace(/[\\/:*?"<>|]/g, "")
-    .replace(/\s+/g, "_")
-    .substring(0, 100);
+    generatedZip.file(cleanName + ".png", base64Data, { base64: true });
 
-  generatedZip.file(cleanName + ".png", base64Data, { base64: true });
+    if (i < previewLimit) {
 
-  if (i < previewLimit) {
+      let itemDiv = document.createElement("div");
+      itemDiv.className = "bulkItem";
 
-    let itemDiv = document.createElement("div");
-    itemDiv.className = "bulkItem";
+      let canvasClone = canvas.cloneNode(true);
+      itemDiv.appendChild(canvasClone);
 
-    let canvasClone = canvas.cloneNode(true);
-    itemDiv.appendChild(canvasClone);
+      let nameLabel = document.createElement("p");
+      nameLabel.innerText = name;
 
-    let nameLabel = document.createElement("p");
-    nameLabel.innerText = name;
+      itemDiv.appendChild(nameLabel);
 
-    itemDiv.appendChild(nameLabel);
+      document.getElementById("bulkResult").appendChild(itemDiv);
 
-    document.getElementById("bulkResult").appendChild(itemDiv);
+    }
 
+    if ((i + 1) % 30 === 0) {
+      await sleep(50);
+    }
   }
 
-  if ((i + 1) % 30 === 0) {
-    await sleep(50);
-  }
+  showStatus(`✓ Successfully generated ${bulkQRData.length} QR codes!`, "complete");
+
+  document.getElementById("downloadZipBtn").style.display = "inline-block";
+  document.getElementById("generateBtn").disabled = false;
+
 }
 
 async function downloadZip() {
