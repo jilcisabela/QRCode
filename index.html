@@ -4,8 +4,9 @@ co<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>QR Name Generator</title>
 
-<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js" defer></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js" defer></script>
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
 
 <style>
 * {
@@ -246,7 +247,7 @@ button:disabled {
 <body>
 
 <div class="container">
-  <h2>🔲 QR Code Generator</h2>
+  <h2>QR Code Generator</h2>
 
   <div class="tabs">
     	<button class="tab-btn active" onclick="switchTab('single', this)">Single QR</button>
@@ -394,6 +395,11 @@ function downloadSingleQR() {
 }
 
 // ===== BULK QR GENERATION =====
+if (typeof QRCode === "undefined" || typeof JSZip === "undefined") {
+  showStatus("Libraries not loaded. Check internet or script links.", "error");
+  return;
+}
+
 async function generateBulkQR() {
   try {
     let namesList = document.getElementById("bulkNames").value
@@ -423,18 +429,19 @@ async function generateBulkQR() {
 
       showStatus(`Processing: ${i + 1} / ${namesList.length}`);
 
-      hiddenQR.innerHTML = "";
-
+      
       // ✅ FIXED: use await directly (no callback)
-      await QRCode.toCanvas(hiddenQR, name, {
-        errorCorrectionLevel: 'M',
-        margin: 1,
-        width: qrSize,
-        color: {
-          dark: '#000000',
-          light: '#ffffff'
-        }
-      });
+      let canvas = document.createElement("canvas");
+
+await QRCode.toCanvas(canvas, name, {
+  errorCorrectionLevel: 'M',
+  margin: 1,
+  width: qrSize,
+  color: {
+    dark: '#000000',
+    light: '#ffffff'
+  }
+});
 
       let canvas = hiddenQR.querySelector("canvas");
 
