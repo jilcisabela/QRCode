@@ -241,6 +241,9 @@ document.getElementById("status").innerText =
 hiddenQRContainer.innerHTML="";
 hiddenQR.makeCode(name);
 
+// wait for QR to render
+await new Promise(r => setTimeout(r, 20));
+
 let canvas = hiddenQRContainer.querySelector("canvas");
 
 /* wait until canvas appears */
@@ -283,8 +286,8 @@ height:220
 }
 
 /* allow browser to breathe every 50 loops */
-if(i % 50 === 0){
-await new Promise(r=>setTimeout(r,10));
+if(i % 20 === 0){
+await new Promise(r=>setTimeout(r,30));
 }
 
 }
