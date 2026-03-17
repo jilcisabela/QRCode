@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+co<!DOCTYPE html>
 <html>
 <head>
 <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -406,9 +406,76 @@ async function generateBulkQR() {
       return;
     }
 
+    let qrSize = parseInt(document.getElementById("qrSize").value);
+    let previewLimit = parseInt(document.getElementById("previewLimit").value);
+    let hiddenQR = document.getElementById("hiddenQR");
+
+    bulkQRData = [];
+    generatedZip = new JSZip();
+
+    document.getElementById("bulkResult").innerHTML = "";
+    document.getElementById("downloadZipBtn").style.display = "none";
+
     document.getElementById("generateBtn").disabled = true;
 
-    // your loop here...
+    for (let i = 0; i < namesList.length; i++) {
+      let name = namesList[i];
+
+      showStatus(`Processing: ${i + 1} / ${namesList.length}`);
+
+      hiddenQR.innerHTML = "";
+
+      // ✅ FIXED: use await directly (no callback)
+      await QRCode.toCanvas(hiddenQR, name, {
+        errorCorrectionLevel: 'M',
+        margin: 1,
+        width: qrSize,
+        color: {
+          dark: '#000000',
+          light: '#ffffff'
+        }
+      });
+
+      let canvas = hiddenQR.querySelector("canvas");
+
+      if (!canvas) continue;
+
+      let qrDataUrl = canvas.toDataURL("image/png");
+      let base64Data = qrDataUrl.split("base64,")[1];
+
+      bulkQRData.push({
+        name: name,
+        dataUrl: qrDataUrl,
+        base64: base64Data
+      });
+
+      let cleanName = name
+        .replace(/[,]/g, "")
+        .replace(/[\\/:*?"<>|]/g, "")
+        .replace(/\s+/g, "_")
+        .substring(0, 100);
+
+      generatedZip.file(cleanName + ".png", base64Data, { base64: true });
+
+      // Preview
+      if (i < previewLimit) {
+        let itemDiv = document.createElement("div");
+        itemDiv.className = "bulkItem";
+
+        let canvasClone = canvas.cloneNode(true);
+        itemDiv.appendChild(canvasClone);
+
+        let nameLabel = document.createElement("p");
+        nameLabel.innerText = name;
+
+        itemDiv.appendChild(nameLabel);
+
+        document.getElementById("bulkResult").appendChild(itemDiv);
+      }
+    }
+
+    showStatus(`✓ Successfully generated ${bulkQRData.length} QR codes!`, "complete");
+    document.getElementById("downloadZipBtn").style.display = "inline-block";
 
   } catch (err) {
     console.error(err);
