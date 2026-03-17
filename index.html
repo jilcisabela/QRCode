@@ -210,12 +210,12 @@ result.innerHTML="";
 let zip=new JSZip();
 let previewLimit = 30;
 
-/* SHOW BUTTON EARLY */
-
 let btn=document.getElementById("downloadZip");
 btn.style.display="inline-block";
 btn.innerText="Preparing ZIP...";
 btn.disabled = true;
+
+let temp=document.getElementById("hiddenQR");
 
 for(let i=0;i<names.length;i++){
 
@@ -224,43 +224,25 @@ let name=names[i];
 document.getElementById("status").innerText =
 "Generating " + (i+1) + " / " + names.length;
 
-let temp = document.getElementById("hiddenQR");
-temp.innerHTML = "";
+temp.innerHTML="";
 
-new QRCode(temp,{
+let qr = new QRCode(temp,{
 text:name,
 width:220,
-height:220,
-useSVG:false
+height:220
 });
 
+/* wait until canvas appears */
+await new Promise(resolve=>setTimeout(resolve,20));
 
-let canvas = null;
-let img = null;
+let canvas=temp.querySelector("canvas");
 
-for(let t=0;t<30;t++){
-
-await new Promise(r=>setTimeout(r,80));
-
-canvas = temp.querySelector("canvas");
-img = temp.querySelector("img");
-
-if(canvas || img) break;
-
-}
-
-let data;
-
-if(canvas){
-data = canvas.toDataURL("image/png").split(",")[1];
-}else if(img){
-data = img.src.split(",")[1];
-}else{
-console.log("QR failed for:", name);
+if(!canvas){
+console.log("QR failed:",name);
 continue;
 }
 
-
+let data = canvas.toDataURL("image/png").split(",")[1];
 
 let cleanName=name
 .replace(/[,]/g,"")
@@ -268,8 +250,7 @@ let cleanName=name
 
 zip.file(cleanName+".png",data,{base64:true});
 
-/* preview */
-/* preview only first 30 */
+/* preview first 30 */
 if(i < previewLimit){
 
 let div=document.createElement("div");
@@ -291,13 +272,21 @@ height:220
 });
 
 }
+
+/* allow browser to breathe every 50 loops */
+if(i % 50 === 0){
+await new Promise(r=>setTimeout(r,10));
 }
+
+}
+
 window.generatedZip=zip;
 
 btn.innerText="Download All QR (ZIP)";
-btn.disabled = false;
+btn.disabled=false;
 
 document.getElementById("status").innerText="QR codes ready. Click Download ZIP.";
+
 btn.scrollIntoView({behavior:"smooth"});
 }
 
