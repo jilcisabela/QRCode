@@ -190,13 +190,7 @@ document.getElementById("downloadBtn").style.display="inline-block"
 
 window.onload = function(){
 
-hiddenQRContainer = document.getElementById("hiddenQR");
 
-hiddenQR = new QRCode(hiddenQRContainer,{
-width:220,
-height:220,
-useSVG:false
-});
 
 }
 
@@ -229,7 +223,7 @@ btn.style.display="inline-block";
 btn.innerText="Preparing ZIP...";
 btn.disabled = true;
 
-let temp=document.getElementById("hiddenQR");
+
 
 for(let i=0;i<names.length;i++){
 
@@ -238,26 +232,19 @@ let name=names[i];
 document.getElementById("status").innerText =
 "Generating " + (i+1) + " / " + names.length;
 
-hiddenQRContainer.innerHTML="";
+hiddenQRContainer.innerHTML = "";
 
-let attempts = 0;
-let canvas, img;
-
-while(attempts < 5){
-
-hiddenQR.makeCode(name);
+// create a fresh QR instance every time
+new QRCode(hiddenQRContainer, {
+    text: name,
+    width: 220,
+    height: 220
+});
 
 await new Promise(requestAnimationFrame);
 
-canvas = hiddenQRContainer.querySelector("canvas");
-img = hiddenQRContainer.querySelector("img");
-
-if(canvas || img){
-break;
-}
-
-attempts++;
-}
+let canvas = hiddenQRContainer.querySelector("canvas");
+let img = hiddenQRContainer.querySelector("img");
 
 if(!canvas && !img){
 console.log("QR failed:", name);
