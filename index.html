@@ -198,7 +198,7 @@ window.onload = function(){
 async function generateBulk(){
 
 window.generatedZip = null;
-
+let hiddenQRContainer = document.getElementById("hiddenQR");
 let names=document.getElementById("bulkNames")
 .value
 .split("\n")
@@ -265,8 +265,8 @@ continue;
 }
 
 let cleanName=name
-.replace(/[,]/g,"")
-.replace(/[\\/:*?"<>|]/g,"");
+.replace(/[^a-zA-Z0-9 ]/g,"")
+.trim();
 
 zip.file(cleanName+".png",data,{base64:true});
 
