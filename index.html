@@ -188,6 +188,18 @@ document.getElementById("downloadBtn").style.display="inline-block"
 
 }
 
+window.onload = function(){
+
+hiddenQRContainer = document.getElementById("hiddenQR");
+
+hiddenQR = new QRCode(hiddenQRContainer,{
+width:220,
+height:220,
+useSVG:false
+});
+
+}
+
 
 async function generateBulk(){
 
@@ -205,7 +217,9 @@ return;
 }
 
 let result=document.getElementById("bulkResult");
+
 result.innerHTML="";
+
 
 let zip=new JSZip();
 let previewLimit = 30;
@@ -224,18 +238,13 @@ let name=names[i];
 document.getElementById("status").innerText =
 "Generating " + (i+1) + " / " + names.length;
 
-temp.innerHTML="";
+hiddenQRContainer.innerHTML="";
+hiddenQR.makeCode(name);
 
-let qr = new QRCode(temp,{
-text:name,
-width:220,
-height:220
-});
+let canvas = hiddenQRContainer.querySelector("canvas");
 
 /* wait until canvas appears */
-await new Promise(resolve=>setTimeout(resolve,20));
 
-let canvas=temp.querySelector("canvas");
 
 if(!canvas){
 console.log("QR failed:",name);
