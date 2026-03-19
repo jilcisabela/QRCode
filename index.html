@@ -204,7 +204,7 @@ if(!canvas) continue;
 
 let data=canvas.toDataURL().split(",")[1];
 
-let clean=name.replace(/[^a-z0-9]/gi,"_");
+let clean=name.replace(/[^a-z0-9]/gi," ");
 
 zip.file(clean+".png",data,{base64:true});
 
