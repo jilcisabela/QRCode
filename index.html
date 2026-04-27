@@ -176,10 +176,13 @@ let middle = document.getElementById("middleName").value.trim();
 let last = document.getElementById("lastName").value.trim();
 let suffix = document.getElementById("suffix").value.trim();
 
+let qrContainer = document.getElementById("qrcode");
+let downloadBtn = document.getElementById("downloadBtn");
+
 if(!first || !last){
-qrcode.innerHTML="";
-downloadBtn.style.display="none";
-return;
+  qrContainer.innerHTML="";
+  downloadBtn.style.display="none";
+  return;
 }
 
 let fullname = suffix
@@ -189,7 +192,7 @@ let fullname = suffix
 qrText=fullname;
 
 /* QR */
-$("#qrcode").empty().qrcode({
+$(qrContainer).empty().qrcode({
 text: fullname,
 width: 220,
 height: 220
