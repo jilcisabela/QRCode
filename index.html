@@ -57,41 +57,50 @@ width:100%;
 height:20px;
 margin-top:10px;
 }
+
+
 #qrCard{
   width:2.1in;
   height:2.75in;
   background:white;
-  border:1px solid #000;
+  border:2px solid #000;
   display:flex;
   flex-direction:column;
   align-items:center;
-  justify-content:flex-start;
-  padding:10px 5px;
+  justify-content:space-between; /* 🔥 better spacing */
+  padding:12px 6px;
   box-sizing:border-box;
 }
 
-/* QR size */
+/* QR */
+#qrcode{
+  display:flex;
+  justify-content:center;
+  align-items:center;
+}
+
 #qrcode canvas{
-  width:1.8in !important;
-  height:1.8in !important;
+  width:1.75in !important;
+  height:1.75in !important;
 }
 
-/* LAST NAME (big like "ABAD") */
+/* LAST NAME */
 #lastDisplay{
-  font-size:26px;
+  font-size:28px;
   font-weight:900;
-  margin:5px 0 0;
+  margin:0;
   text-transform:uppercase;
-  font-family:serif;
+  font-family:"Times New Roman", serif;
+  line-height:1;
 }
 
-/* FULL NAME (like "BETHANY JOY") */
+/* FIRST NAME */
 #fullDisplay{
   font-size:14px;
-  margin:2px 0 0;
-  letter-spacing:1px;
+  margin:0;
+  letter-spacing:2px;
+  text-align:center;
 }
-
 
 </style>
 </head>
@@ -189,7 +198,7 @@ height: 220
 /* DISPLAY TEXT */
 document.getElementById("lastDisplay").innerText = last.toUpperCase();
 document.getElementById("fullDisplay").innerText =
-(first + " " + (middle || "")).toUpperCase();
+[first, middle].filter(Boolean).join(" ").toUpperCase();
 
 downloadBtn.style.display="inline-block";
 }
@@ -198,11 +207,17 @@ function downloadQR(){
 
 let card = document.getElementById("qrCard");
 
-html2canvas(card).then(canvas=>{
-let link=document.createElement("a");
-link.href=canvas.toDataURL();
-link.download=qrText+".png";
-link.click();
+html2canvas(card, {
+    scale: 3, // 🔥 increases quality (VERY IMPORTANT)
+    useCORS: true
+}).then(canvas=>{
+
+    // convert to high-quality PNG
+    let link=document.createElement("a");
+    link.href=canvas.toDataURL("image/png");
+    link.download=qrText+".png";
+    link.click();
+
 });
 
 }
