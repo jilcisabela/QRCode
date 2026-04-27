@@ -300,103 +300,111 @@ downloadZipBtn.style.display = "none";
 
 let hiddenContainer = document.createElement("div");
 hiddenContainer.style.position = "fixed";
-hiddenContainer.style.left = "-9999px";
+hiddenContainer.style.top = "0";
+hiddenContainer.style.left = "0";
+hiddenContainer.style.opacity = "0";
+hiddenContainer.style.pointerEvents = "none";
 document.body.appendChild(hiddenContainer);
 
 
+for(let i = 0; i < names.length; i++){
+  try {
 
-for(let i=0; i<names.length; i++){
+    let name = names[i];
 
-  let name = names[i];
+    status.innerText = `Generating ${i+1}/${names.length}`;
+    progressBar.value = ((i+1) / names.length) * 100;
 
-  status.innerText = `Generating ${i+1}/${names.length}`;
-  progressBar.value = ((i+1) / names.length) * 100;
+    /* CREATE CARD */
+    let tempCard = document.createElement("div");
+    tempCard.style.width = "2.1in";
+    tempCard.style.height = "2.75in";
+    tempCard.style.border = "2px solid black";
+    tempCard.style.display = "flex";
+    tempCard.style.flexDirection = "column";
+    tempCard.style.alignItems = "center";
+    tempCard.style.justifyContent = "space-between";
+    tempCard.style.padding = "12px 6px";
+    tempCard.style.boxSizing = "border-box";
+    tempCard.style.background = "white";
 
-  /* CREATE CARD */
-  let tempCard = document.createElement("div");
-  tempCard.style.width = "2.1in";
-  tempCard.style.height = "2.75in";
-  tempCard.style.border = "2px solid black";
-  tempCard.style.display = "flex";
-  tempCard.style.flexDirection = "column";
-  tempCard.style.alignItems = "center";
-  tempCard.style.justifyContent = "space-between";
-  tempCard.style.padding = "12px 6px";
-  tempCard.style.boxSizing = "border-box";
-  tempCard.style.background = "white";
-hiddenContainer.innerHTML = "";
-hiddenContainer.appendChild(tempCard);
-  /* QR */
-  let qrDiv = document.createElement("div");
-  tempCard.appendChild(qrDiv);
+    hiddenContainer.replaceChildren(tempCard);
 
-  $(qrDiv).empty().qrcode({
-    text: name,
-    width: 220,
-    height: 220
-  });
+    /* QR */
+    let qrDiv = document.createElement("div");
+    tempCard.appendChild(qrDiv);
 
-  /* PARSE NAME */
-  let last = "";
-let firstPart = "";
+    $(qrDiv).empty().qrcode({
+      text: name,
+      width: 220,
+      height: 220
+    });
 
-if(name.includes(",")){
-  let parts = name.split(",");
-  last = parts[0].trim();
-  firstPart = (parts[1] || "").trim();
-} else {
-  let parts = name.split(" ");
+    await new Promise(r => setTimeout(r, 50));
 
-  if(parts.length >= 3){
-    last = parts.slice(-2).join(" "); // assume 2-word surname
-    firstPart = parts.slice(0, -2).join(" ");
-  } else {
-    last = parts.pop();
-    firstPart = parts.join(" ");
+    /* PARSE NAME */
+    let last = "";
+    let firstPart = "";
+
+    if(name.includes(",")){
+      let parts = name.split(",");
+      last = parts[0].trim();
+      firstPart = (parts[1] || "").trim();
+    } else {
+      let parts = name.split(" ");
+
+      if(parts.length >= 3){
+        last = parts.slice(-2).join(" ");
+        firstPart = parts.slice(0, -2).join(" ");
+      } else {
+        last = parts.pop();
+        firstPart = parts.join(" ");
+      }
+    }
+
+    /* TEXT */
+    let lastEl = document.createElement("h1");
+    lastEl.innerText = last.toUpperCase();
+    lastEl.style.fontSize = "28px";
+    lastEl.style.fontWeight = "900";
+    lastEl.style.margin = "0";
+    lastEl.style.fontFamily = "Times New Roman, serif";
+
+    let firstEl = document.createElement("p");
+    firstEl.innerText = firstPart.toUpperCase();
+    firstEl.style.fontSize = "14px";
+    firstEl.style.margin = "0";
+    firstEl.style.letterSpacing = "2px";
+
+    tempCard.appendChild(lastEl);
+    tempCard.appendChild(firstEl);
+
+    /* WAIT for render */
+    await new Promise(r => setTimeout(r, 80));
+
+    /* CAPTURE */
+    let canvas = await html2canvas(tempCard, { scale: 2 });
+
+    let data = canvas.toDataURL().split(",")[1];
+
+    let clean = name
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/gi,"_")
+      .replace(/^_|_$/g,"");
+
+    zip.file(`${i+1}_${clean}.png`, data, { base64: true });
+
+    /* prevent freeze */
+    if(i % 10 === 0){
+      await new Promise(requestAnimationFrame);
+    }
+
+  } catch(err) {
+    console.error("Error at index", i, err);
   }
 }
 
-  /* TEXT */
-  let lastEl = document.createElement("h1");
-  lastEl.innerText = last.toUpperCase();
-  lastEl.style.fontSize = "28px";
-  lastEl.style.fontWeight = "900";
-  lastEl.style.margin = "0";
-  lastEl.style.fontFamily = "Times New Roman, serif";
 
-  let firstEl = document.createElement("p");
-  firstEl.innerText = firstPart.toUpperCase();
-  firstEl.style.fontSize = "14px";
-  firstEl.style.margin = "0";
-  firstEl.style.letterSpacing = "2px";
-
-  tempCard.appendChild(lastEl);
-  tempCard.appendChild(firstEl);
-
-  /* WAIT for QR render */
-  await new Promise(requestAnimationFrame);
-await new Promise(requestAnimationFrame);
-
-  /* CAPTURE */
-  let canvas = await html2canvas(tempCard, {
-    scale: 2
-  });
-
-  let data = canvas.toDataURL().split(",")[1];
-
-  let clean = name
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/gi,"_")
-    .replace(/^_|_$/g,"");
-
-  zip.file(`${i+1}_${clean}.png`, data, { base64: true });
-
-  /* prevent freeze */
-  if(i % 10 === 0){
-  await new Promise(requestAnimationFrame);
-}
-
-}
 hiddenContainer.remove();
 window.generatedZip = zip;
 
