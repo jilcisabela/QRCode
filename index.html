@@ -7,7 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.qrcode/1.0/jquery.qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 
 <style>
 body{
@@ -57,79 +56,6 @@ width:100%;
 height:20px;
 margin-top:10px;
 }
-
-
-#lastDisplay{
-  font-size:22px;
-  font-weight:900;
-  margin:0;
-  text-transform:uppercase;
-  font-family:"Times New Roman", serif;
-  text-align:center;
-  width:100%;
-
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-}
-
-#fullDisplay{
-  font-size:12px;
-  margin:0;
-  letter-spacing:1px;
-  text-align:center;
-  width:100%;
-
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-}
-
-/* QR */
-#qrcode{
-  display:flex;
-  justify-content:center;
-  align-items:center;
-}
-
-#qrcode canvas{
-  width:1.75in !important;
-  height:1.75in !important;
-}
-
-/* LAST NAME */
-#lastDisplay{
-  font-size:28px;
-  font-weight:900;
-  margin:0;
-  text-transform:uppercase;
-  font-family:"Times New Roman", serif;
-  line-height:1;
-}
-
-/* FIRST NAME */
-#fullDisplay{
-  font-size:14px;
-  margin:0;
-  letter-spacing:2px;
-  text-align:center;
-}
-
-#qrCard{
-  width:2.1in;
-  height:2.75in;
-  border:2px solid black;
-  display:flex;
-  flex-direction:column;
-  align-items:center;
-  justify-content:space-between;
-  padding:12px 6px;
-  box-sizing:border-box;
-  margin:auto;
-  background:white;
-}
-
-
 </style>
 </head>
 
@@ -149,11 +75,7 @@ margin-top:10px;
 <input id="lastName" placeholder="Last Name" onkeyup="generateQR()">
 <input id="suffix" placeholder="Suffix" onkeyup="generateQR()">
 
-<div id="qrCard">
-  <div id="qrcode"></div>
-  <h1 id="lastDisplay"></h1>
-  <p id="fullDisplay"></p>
-</div>
+<div id="qrcode"></div>
 
 <button id="downloadBtn" class="primary" onclick="downloadQR()" style="display:none">
 Download QR
@@ -199,29 +121,15 @@ document.getElementById("bulkSection").style.display="block";
 
 function generateQR(){
 
-function autoFitText(el, maxSize, minSize){
-  let size = maxSize;
-  el.style.fontSize = size + "px";
-
-  while(el.scrollWidth > el.clientWidth && size > minSize){
-    size--;
-    el.style.fontSize = size + "px";
-  }
-}
-
-
-let first = document.getElementById("firstName").value.trim();
-let middle = document.getElementById("middleName").value.trim();
-let last = document.getElementById("lastName").value.trim();
-let suffix = document.getElementById("suffix").value.trim();
-
-let qrContainer = document.getElementById("qrcode");
-let downloadBtn = document.getElementById("downloadBtn");
+let first=firstName.value.trim();
+let middle=middleName.value.trim();
+let last=lastName.value.trim();
+let suffix=suffix.value.trim();
 
 if(!first || !last){
-  qrContainer.innerHTML="";
-  downloadBtn.style.display="none";
-  return;
+qrcode.innerHTML="";
+downloadBtn.style.display="none";
+return;
 }
 
 let fullname = suffix
@@ -230,201 +138,118 @@ let fullname = suffix
 
 qrText=fullname;
 
-/* QR */
-$(qrContainer).empty().qrcode({
+$("#qrcode").empty().qrcode({
 text: fullname,
 width: 220,
 height: 220
 });
 
-/* DISPLAY TEXT */
-document.getElementById("lastDisplay").innerText = last.toUpperCase();
-document.getElementById("fullDisplay").innerText =
-[first, middle].filter(Boolean).join(" ").toUpperCase();
-
-autoFitText(document.getElementById("lastDisplay"), 28, 14);
-autoFitText(document.getElementById("fullDisplay"), 14, 10);
-
 downloadBtn.style.display="inline-block";
 }
 
 function downloadQR(){
+let canvas=document.querySelector("#qrcode canvas");
+if(!canvas) return;
 
-let card = document.getElementById("qrCard");
-
-html2canvas(card, {
-    scale: 3, // 🔥 increases quality (VERY IMPORTANT)
-    useCORS: true
-}).then(canvas=>{
-
-    // convert to high-quality PNG
-    let link = document.createElement("a");
-
-let safeName = qrText
-  .toLowerCase()
-  .replace(/[^a-z0-9]+/gi,"_")
-  .replace(/^_|_$/g,"");
-
-link.href = canvas.toDataURL("image/png");
-link.download = (safeName || "qr_code") + ".png";
+let link=document.createElement("a");
+link.href=canvas.toDataURL();
+link.download=qrText+".png";
 link.click();
-
-});
-
 }
 
 async function generateBulk(){
 
-let names = bulkNames.value
+let names=bulkNames.value
 .split("\n")
 .map(n=>n.trim())
 .filter(n=>n);
 
-if(names.length === 0) return;
+if(names.length===0) return;
 
-if(names.length > 5000){
-  alert("Max 5000 names");
-  return;
+if(names.length>5000){
+alert("Max 5000 names");
+return;
 }
 
-let zip = new JSZip();
+let zip=new JSZip();
+let hidden=document.getElementById("hiddenQR");
 
-let progressBar = document.getElementById("progressBar");
-let status = document.getElementById("status");
 let downloadZipBtn = document.getElementById("downloadZip");
+let progressBar = document.getElementById("progressBar");
+let bulkResult = document.getElementById("bulkResult");
+let status = document.getElementById("status");
 
 progressBar.style.display = "block";
 progressBar.value = 0;
+bulkResult.innerHTML = "";
 downloadZipBtn.style.display = "none";
 
+for(let i=0;i<names.length;i++){
 
-let hiddenContainer = document.createElement("div");
-hiddenContainer.style.position = "fixed";
-hiddenContainer.style.top = "0";
-hiddenContainer.style.left = "0";
-hiddenContainer.style.opacity = "0";
-hiddenContainer.style.pointerEvents = "none";
-document.body.appendChild(hiddenContainer);
+let name=names[i];
 
+status.innerText=`Generating ${i+1}/${names.length}`;
+progressBar.value = (i / names.length) * 100;
 
-for(let i = 0; i < names.length; i++){
-  try {
+$(hidden).empty().qrcode({
+text:name,
+width:220,
+height:220
+});
 
-    let name = names[i];
+await new Promise(r=>setTimeout(r,10));
 
-    status.innerText = `Generating ${i+1}/${names.length}`;
-    progressBar.value = ((i+1) / names.length) * 100;
+let canvas=hidden.querySelector("canvas");
+if(!canvas) continue;
 
-    /* CREATE CARD */
-    let tempCard = document.createElement("div");
-    tempCard.style.width = "2.1in";
-    tempCard.style.height = "2.75in";
-    tempCard.style.border = "2px solid black";
-    tempCard.style.display = "flex";
-    tempCard.style.flexDirection = "column";
-    tempCard.style.alignItems = "center";
-    tempCard.style.justifyContent = "space-between";
-    tempCard.style.padding = "12px 6px";
-    tempCard.style.boxSizing = "border-box";
-    tempCard.style.background = "white";
+let data=canvas.toDataURL().split(",")[1];
 
-    hiddenContainer.replaceChildren(tempCard);
+let clean=name.replace(/[^a-z0-9]/gi," ");
 
-    /* QR */
-    let qrDiv = document.createElement("div");
-    tempCard.appendChild(qrDiv);
+zip.file(clean+".png",data,{base64:true});
 
-    $(qrDiv).empty().qrcode({
-      text: name,
-      width: 220,
-      height: 220
-    });
+/* preview */
+if(i<30){
+let div=document.createElement("div");
+div.className="bulkItem";
 
-    await new Promise(r => setTimeout(r, 50));
+let qr=document.createElement("div");
+div.appendChild(qr);
 
-    /* PARSE NAME */
-    let last = "";
-    let firstPart = "";
+let label=document.createElement("p");
+label.innerText=name;
+div.appendChild(label);
 
-    if(name.includes(",")){
-      let parts = name.split(",");
-      last = parts[0].trim();
-      firstPart = (parts[1] || "").trim();
-    } else {
-      let parts = name.split(" ");
+bulkResult.appendChild(div);
 
-      if(parts.length >= 3){
-        last = parts.slice(-2).join(" ");
-        firstPart = parts.slice(0, -2).join(" ");
-      } else {
-        last = parts.pop();
-        firstPart = parts.join(" ");
-      }
-    }
+$(qr).qrcode({text:name,width:220,height:220});
+}
 
-    /* TEXT */
-    let lastEl = document.createElement("h1");
-    lastEl.innerText = last.toUpperCase();
-    lastEl.style.fontSize = "28px";
-    lastEl.style.fontWeight = "900";
-    lastEl.style.margin = "0";
-    lastEl.style.fontFamily = "Times New Roman, serif";
+/* prevent freeze */
+if(i%20===0) await new Promise(r=>setTimeout(r,10));
+}
 
-    let firstEl = document.createElement("p");
-    firstEl.innerText = firstPart.toUpperCase();
-    firstEl.style.fontSize = "14px";
-    firstEl.style.margin = "0";
-    firstEl.style.letterSpacing = "2px";
+window.generatedZip=zip;
 
-    tempCard.appendChild(lastEl);
-    tempCard.appendChild(firstEl);
+progressBar.value=100;
+status.innerText="Done ! God bless";
 
-    /* WAIT for render */
-    await new Promise(r => setTimeout(r, 80));
-
-    /* CAPTURE */
-    let canvas = await html2canvas(tempCard, { scale: 2 });
-
-    let data = canvas.toDataURL().split(",")[1];
-
-    let clean = name
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/gi,"_")
-      .replace(/^_|_$/g,"");
-
-    zip.file(`${i+1}_${clean}.png`, data, { base64: true });
-
-    /* prevent freeze */
-    if(i % 10 === 0){
-      await new Promise(requestAnimationFrame);
-    }
-
-  } catch(err) {
-    console.error("Error at index", i, err);
-  }
+downloadZipBtn.style.display="inline-block";
 }
 
 
-hiddenContainer.remove();
-window.generatedZip = zip;
-
-progressBar.value = 100;
-status.innerText = "Done!";
-downloadZipBtn.style.display = "inline-block";
-}
 
 
 async function downloadZip(){
 if(!window.generatedZip) return;
 
-let status = document.getElementById("status");
-status.innerText = "Zipping...";
+status.innerText="Zipping...";
 
-let blob = await window.generatedZip.generateAsync({type:"blob"});
+let blob=await window.generatedZip.generateAsync({type:"blob"});
 
 let link=document.createElement("a");
 link.href=URL.createObjectURL(blob);
-link.download="QR_Cards.zip";
+link.download="QR_Codes.zip";
 link.click();
 
 status.innerText="Download complete!";
