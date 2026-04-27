@@ -270,16 +270,26 @@ for(let i=0; i<names.length; i++){
   let qrDiv = document.createElement("div");
   tempCard.appendChild(qrDiv);
 
-  $(qrDiv).qrcode({
+  await new Promise(resolve=>{
+  $(qrDiv).empty().qrcode({
     text: name,
     width: 220,
     height: 220
   });
 
   /* PARSE NAME */
+let last = "";
+let firstPart = "";
+
+if(name.includes(",")){
   let parts = name.split(",");
-  let last = (parts[0] || "").trim();
-  let firstPart = (parts[1] || "").trim();
+  last = parts[0].trim();
+  firstPart = (parts[1] || "").trim();
+}else{
+  let parts = name.split(" ");
+  last = parts.pop();
+  firstPart = parts.join(" ");
+}
 
   /* LAST NAME */
   let lastEl = document.createElement("h1");
@@ -300,13 +310,20 @@ for(let i=0; i<names.length; i++){
   tempCard.appendChild(firstEl);
 
   /* WAIT RENDER */
-  await new Promise(r=>setTimeout(r,10));
+  setTimeout(resolve, 30); // safer delay
 
-  let canvas = await html2canvas(tempCard, { scale: 3 });
+  let canvas = await html2canvas(tempCard, {
+  scale: 4, // higher quality
+  width: tempCard.offsetWidth,
+  height: tempCard.offsetHeight
+});
 
   let data = canvas.toDataURL().split(",")[1];
 
-  let clean = name.replace(/[^a-z0-9]/gi," ");
+  let clean = name
+  .toLowerCase()
+  .replace(/[^a-z0-9]+/gi,"_")
+  .replace(/^_|_$/g,"");
 
   zip.file(clean + ".png", data, { base64: true });
 
