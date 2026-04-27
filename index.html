@@ -224,59 +224,104 @@ html2canvas(card, {
 
 async function generateBulk(){
 
-let tempCard = document.createElement("div");
-tempCard.style.width = "2.1in";
-tempCard.style.height = "2.75in";
-tempCard.style.border = "2px solid black";
-tempCard.style.display = "flex";
-tempCard.style.flexDirection = "column";
-tempCard.style.alignItems = "center";
-tempCard.style.justifyContent = "space-between";
-tempCard.style.padding = "12px 6px";
-tempCard.style.boxSizing = "border-box";
-tempCard.style.background = "white";
+let names = bulkNames.value
+.split("\n")
+.map(n=>n.trim())
+.filter(n=>n);
 
-/* QR container */
-let qrDiv = document.createElement("div");
-tempCard.appendChild(qrDiv);
+if(names.length === 0) return;
 
-/* Name parsing */
-let parts = name.split(",");
-let last = parts[0] || "";
-let firstPart = parts[1] || "";
+if(names.length > 5000){
+  alert("Max 5000 names");
+  return;
+}
 
-let lastEl = document.createElement("h1");
-lastEl.innerText = last.trim().toUpperCase();
-lastEl.style.fontSize = "28px";
-lastEl.style.fontWeight = "900";
-lastEl.style.margin = "0";
-lastEl.style.fontFamily = "Times New Roman, serif";
+let zip = new JSZip();
 
-let firstEl = document.createElement("p");
-firstEl.innerText = firstPart.trim().toUpperCase();
-firstEl.style.fontSize = "14px";
-firstEl.style.margin = "0";
-firstEl.style.letterSpacing = "2px";
+let progressBar = document.getElementById("progressBar");
+let status = document.getElementById("status");
+let downloadZipBtn = document.getElementById("downloadZip");
 
-tempCard.appendChild(lastEl);
-tempCard.appendChild(firstEl);
+progressBar.style.display = "block";
+progressBar.value = 0;
+downloadZipBtn.style.display = "none";
 
-/* generate QR */
-$(qrDiv).qrcode({
-  text: name,
-  width: 220,
-  height: 220
-});
+for(let i=0; i<names.length; i++){
 
-/* render to image */
-await new Promise(r=>setTimeout(r,10));
+  let name = names[i];
 
-let canvas = await html2canvas(tempCard, { scale: 3 });
+  status.innerText = `Generating ${i+1}/${names.length}`;
+  progressBar.value = (i / names.length) * 100;
 
-let data = canvas.toDataURL().split(",")[1];
+  /* CREATE CARD */
+  let tempCard = document.createElement("div");
+  tempCard.style.width = "2.1in";
+  tempCard.style.height = "2.75in";
+  tempCard.style.border = "2px solid black";
+  tempCard.style.display = "flex";
+  tempCard.style.flexDirection = "column";
+  tempCard.style.alignItems = "center";
+  tempCard.style.justifyContent = "space-between";
+  tempCard.style.padding = "12px 6px";
+  tempCard.style.boxSizing = "border-box";
+  tempCard.style.background = "white";
 
-let clean = name.replace(/[^a-z0-9]/gi," ");
-zip.file(clean + ".png", data, { base64: true });
+  /* QR */
+  let qrDiv = document.createElement("div");
+  tempCard.appendChild(qrDiv);
+
+  $(qrDiv).qrcode({
+    text: name,
+    width: 220,
+    height: 220
+  });
+
+  /* PARSE NAME */
+  let parts = name.split(",");
+  let last = (parts[0] || "").trim();
+  let firstPart = (parts[1] || "").trim();
+
+  /* LAST NAME */
+  let lastEl = document.createElement("h1");
+  lastEl.innerText = last.toUpperCase();
+  lastEl.style.fontSize = "28px";
+  lastEl.style.fontWeight = "900";
+  lastEl.style.margin = "0";
+  lastEl.style.fontFamily = "Times New Roman, serif";
+
+  /* FIRST NAME */
+  let firstEl = document.createElement("p");
+  firstEl.innerText = firstPart.toUpperCase();
+  firstEl.style.fontSize = "14px";
+  firstEl.style.margin = "0";
+  firstEl.style.letterSpacing = "2px";
+
+  tempCard.appendChild(lastEl);
+  tempCard.appendChild(firstEl);
+
+  /* WAIT RENDER */
+  await new Promise(r=>setTimeout(r,10));
+
+  let canvas = await html2canvas(tempCard, { scale: 3 });
+
+  let data = canvas.toDataURL().split(",")[1];
+
+  let clean = name.replace(/[^a-z0-9]/gi," ");
+
+  zip.file(clean + ".png", data, { base64: true });
+
+  /* prevent freeze */
+  if(i % 20 === 0){
+    await new Promise(r=>setTimeout(r,10));
+  }
+}
+
+window.generatedZip = zip;
+
+progressBar.value = 100;
+status.innerText = "Done!";
+downloadZipBtn.style.display = "inline-block";
+}
 
 
 
@@ -284,13 +329,14 @@ zip.file(clean + ".png", data, { base64: true });
 async function downloadZip(){
 if(!window.generatedZip) return;
 
-status.innerText="Zipping...";
+let status = document.getElementById("status");
+status.innerText = "Zipping...";
 
-let blob=await window.generatedZip.generateAsync({type:"blob"});
+let blob = await window.generatedZip.generateAsync({type:"blob"});
 
 let link=document.createElement("a");
 link.href=URL.createObjectURL(blob);
-link.download="QR_Codes.zip";
+link.download="QR_Cards.zip";
 link.click();
 
 status.innerText="Download complete!";
