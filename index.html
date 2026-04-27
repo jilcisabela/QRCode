@@ -171,10 +171,10 @@ document.getElementById("bulkSection").style.display="block";
 
 function generateQR(){
 
-let first=firstName.value.trim();
-let middle=middleName.value.trim();
-let last=lastName.value.trim();
-let suffix=suffix.value.trim();
+let first = document.getElementById("firstName").value.trim();
+let middle = document.getElementById("middleName").value.trim();
+let last = document.getElementById("lastName").value.trim();
+let suffix = document.getElementById("suffix").value.trim();
 
 if(!first || !last){
 qrcode.innerHTML="";
@@ -270,7 +270,6 @@ for(let i=0; i<names.length; i++){
   let qrDiv = document.createElement("div");
   tempCard.appendChild(qrDiv);
 
-  await new Promise(resolve=>{
   $(qrDiv).empty().qrcode({
     text: name,
     width: 220,
@@ -278,20 +277,20 @@ for(let i=0; i<names.length; i++){
   });
 
   /* PARSE NAME */
-let last = "";
-let firstPart = "";
+  let last = "";
+  let firstPart = "";
 
-if(name.includes(",")){
-  let parts = name.split(",");
-  last = parts[0].trim();
-  firstPart = (parts[1] || "").trim();
-}else{
-  let parts = name.split(" ");
-  last = parts.pop();
-  firstPart = parts.join(" ");
-}
+  if(name.includes(",")){
+    let parts = name.split(",");
+    last = parts[0].trim();
+    firstPart = (parts[1] || "").trim();
+  }else{
+    let parts = name.split(" ");
+    last = parts.pop();
+    firstPart = parts.join(" ");
+  }
 
-  /* LAST NAME */
+  /* TEXT */
   let lastEl = document.createElement("h1");
   lastEl.innerText = last.toUpperCase();
   lastEl.style.fontSize = "28px";
@@ -299,7 +298,6 @@ if(name.includes(",")){
   lastEl.style.margin = "0";
   lastEl.style.fontFamily = "Times New Roman, serif";
 
-  /* FIRST NAME */
   let firstEl = document.createElement("p");
   firstEl.innerText = firstPart.toUpperCase();
   firstEl.style.fontSize = "14px";
@@ -309,21 +307,20 @@ if(name.includes(",")){
   tempCard.appendChild(lastEl);
   tempCard.appendChild(firstEl);
 
-  /* WAIT RENDER */
-  setTimeout(resolve, 30); // safer delay
+  /* WAIT for QR render */
+  await new Promise(r=>setTimeout(r,30));
 
+  /* CAPTURE */
   let canvas = await html2canvas(tempCard, {
-  scale: 4, // higher quality
-  width: tempCard.offsetWidth,
-  height: tempCard.offsetHeight
-});
+    scale: 4
+  });
 
   let data = canvas.toDataURL().split(",")[1];
 
   let clean = name
-  .toLowerCase()
-  .replace(/[^a-z0-9]+/gi,"_")
-  .replace(/^_|_$/g,"");
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/gi,"_")
+    .replace(/^_|_$/g,"");
 
   zip.file(clean + ".png", data, { base64: true });
 
@@ -339,8 +336,6 @@ progressBar.value = 100;
 status.innerText = "Done!";
 downloadZipBtn.style.display = "inline-block";
 }
-
-
 
 
 async function downloadZip(){
